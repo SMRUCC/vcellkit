@@ -86,6 +86,7 @@ Public Class Reader : Inherits CellularModules
             If index = 0 Then
                 Exit Do
             Else
+                ' offset chain block
                 Call stream.Seek(offset, SeekOrigin.Begin)
                 Call offset.SetValue(stream.ReadInt64)
             End If
