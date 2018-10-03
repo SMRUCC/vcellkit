@@ -68,6 +68,20 @@ Public Class Raw : Implements IDisposable
             .ToArray
     End Function
 
+    <MethodImpl(MethodImplOptions.AggressiveInlining)>
+    Protected Function GetModuleReader() As Dictionary(Of String, PropertyInfo)
+        Return GetModules _
+            .ToDictionary(Function(prop)
+                              Dim modAttr = prop.GetAttribute(Of [Module])
+
+                              If modAttr Is Nothing OrElse modAttr.Name.StringEmpty Then
+                                  Return prop.Name
+                              Else
+                                  Return modAttr.Name
+                              End If
+                          End Function)
+    End Function
+
 #Region "IDisposable Support"
     Private disposedValue As Boolean ' To detect redundant calls
 
