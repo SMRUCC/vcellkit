@@ -3,6 +3,7 @@ Imports System.Reflection
 Imports Microsoft.VisualBasic.ComponentModel.DataSourceModel
 Imports Microsoft.VisualBasic.Data.IO
 Imports Microsoft.VisualBasic.Text
+Imports [Module] = Microsoft.VisualBasic.ComponentModel.DataSourceModel.SchemaMaps.DataFrameColumnAttribute
 
 ''' <summary>
 ''' The sandbox engine output raw data file format
@@ -17,31 +18,42 @@ Public Class Raw : Implements IDisposable
     ''' 由基因转录出来的mRNA的编号列表
     ''' </summary>
     ''' <returns></returns>
+    <[Module]("Message-RNA")>
     Public ReadOnly Property mRNAId As IReadOnlyCollection(Of String)
     ''' <summary>
     ''' 由基因转录出来的其他的RNA分子的编号列表
     ''' </summary>
     ''' <returns></returns>
+    ''' 
+    <[Module]("Component-RNA")>
     Public ReadOnly Property RNAId As IReadOnlyCollection(Of String)
     ''' <summary>
     ''' 由mRNA翻译出来的多肽链的Id列表
     ''' </summary>
     ''' <returns></returns>
+    ''' 
+    <[Module]("Polypeptide")>
     Public ReadOnly Property Polypeptide As IReadOnlyCollection(Of String)
     ''' <summary>
     ''' 由一条或者多条多肽链修饰之后得到的最终的蛋白质的编号列表
     ''' </summary>
     ''' <returns></returns>
+    ''' 
+    <[Module]("Protein")>
     Public ReadOnly Property Proteins As IReadOnlyCollection(Of String)
     ''' <summary>
     ''' 代谢物列表
     ''' </summary>
     ''' <returns></returns>
+    ''' 
+    <[Module]("Metabolite")>
     Public ReadOnly Property Metabolites As IReadOnlyCollection(Of String)
     ''' <summary>
     ''' 反应过程编号列表
     ''' </summary>
     ''' <returns></returns>
+    ''' 
+    <[Module]("Reaction-Flux")>
     Public ReadOnly Property Reactions As IReadOnlyCollection(Of String)
 
 #End Region
@@ -98,7 +110,9 @@ Public Class Writer : Inherits Raw
     Public Function Init() As Writer
         Dim modules As PropertyInfo() = GetType(Raw) _
             .GetProperties(PublicProperty) _
-            .Where(Function(prop) prop.PropertyType Is GetType(IReadOnlyCollection(Of String))) _
+            .Where(Function(prop)
+                       Return prop.PropertyType Is GetType(IReadOnlyCollection(Of String))
+                   End Function) _
             .ToArray
 
         Call stream.Seek(0, SeekOrigin.Begin)
