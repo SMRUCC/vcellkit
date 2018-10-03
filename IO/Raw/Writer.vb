@@ -92,7 +92,9 @@ Public Class Writer : Inherits Raw
         ' 索引按照time降序排序，结构为
         ' 
         ' - double time
+        ' - integer index，从零开始的索引号
         ' - long() 按照modules顺序排序的offset值的集合
+        ' - long 当前数据块的起始的offset偏移
         '
         Dim times = offsets.GroupBy(Function(d) d.time) _
             .OrderByDescending(Function(time) time.Key) _
@@ -105,10 +107,17 @@ Public Class Writer : Inherits Raw
 
                         Return (time:=time.Key, offsets:=offsets)
                     End Function)
+        Dim i As int = Scan0
 
-        For Each time In times
-            Call stream.Write(time.time)
+        For Each time As (point#, offsets As Long()) In times
+            Dim start& = stream.Position
+
+            ' 最后一个值是当前索引的偏移量，这样子就可以
+            ' 在读取的时候从后往前读取索引了
+            Call stream.Write(time.point)
+            Call stream.Write(++i)
             Call stream.Write(time.offsets)
+            Call stream.Write(start)
         Next
     End Sub
 
