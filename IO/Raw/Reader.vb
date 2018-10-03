@@ -6,7 +6,7 @@ Imports Microsoft.VisualBasic.Data.csv.IO
 Imports Microsoft.VisualBasic.Data.IO
 Imports Microsoft.VisualBasic.Language
 
-Public Class Reader : Inherits Raw
+Public Class Reader : Inherits CellularModules
 
     ReadOnly stream As BinaryDataReader
 
