@@ -62,6 +62,16 @@ Public Class Raw : Implements IDisposable
 
 #End Region
 
+    <MethodImpl(MethodImplOptions.AggressiveInlining)>
+    Protected Function GetModules() As PropertyInfo()
+        Return GetType(Raw) _
+            .GetProperties(PublicProperty) _
+            .Where(Function(prop)
+                       Return prop.PropertyType Is GetType(Index(Of String))
+                   End Function) _
+            .ToArray
+    End Function
+
 #Region "IDisposable Support"
     Private disposedValue As Boolean ' To detect redundant calls
 
@@ -96,6 +106,23 @@ Public Class Raw : Implements IDisposable
 
 End Class
 
+Public Class Reader : Inherits Raw
+
+    ReadOnly stream As BinaryDataReader
+
+    Sub New(input As Stream)
+        stream = New BinaryDataReader(input)
+    End Sub
+
+    Public Function LoadIndex() As Reader
+
+    End Function
+
+    Public Function Read(time#, module$) As Double()
+
+    End Function
+End Class
+
 ''' <summary>
 ''' 写数据模块
 ''' </summary>
@@ -114,12 +141,7 @@ Public Class Writer : Inherits Raw
     ''' </summary>
     ''' <returns></returns>
     Public Function Init() As Writer
-        Dim modules As PropertyInfo() = GetType(Raw) _
-            .GetProperties(PublicProperty) _
-            .Where(Function(prop)
-                       Return prop.PropertyType Is GetType(Index(Of String))
-                   End Function) _
-            .ToArray
+        Dim modules As PropertyInfo() = Me.GetModules
 
         Call stream.Seek(0, SeekOrigin.Begin)
         Call stream.Write(Raw.Magic, BinaryStringFormat.NoPrefixOrTermination)
@@ -172,4 +194,12 @@ Public Class Writer : Inherits Raw
 
         Return Me
     End Function
+
+    Protected Overrides Sub Dispose(disposing As Boolean)
+        Call stream.Flush()
+        Call stream.Close()
+        Call stream.Dispose()
+
+        MyBase.Dispose(disposing)
+    End Sub
 End Class
