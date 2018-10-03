@@ -16,6 +16,11 @@ Public Class Writer : Inherits Raw
     ReadOnly modules As New Dictionary(Of String, Index(Of String))
     ReadOnly moduleIndex As New Index(Of String)
 
+    ''' <summary>
+    ''' 写在文件最末尾的，用于建立二叉树索引？
+    ''' </summary>
+    Dim offsets As New List(Of (time#, moduleName$, offset&))
+
     Sub New(output As Stream)
         stream = New BinaryDataWriter(output, Encodings.UTF8WithoutBOM)
     End Sub
@@ -65,6 +70,7 @@ Public Class Writer : Inherits Raw
     End Function
 
     Public Function Write(module$, time#, data#()) As Writer
+        offsets += (time, [module], stream.Position)
 
         ' 一个循环之后得到的结果数据的写入的结构为
         '
@@ -80,6 +86,30 @@ Public Class Writer : Inherits Raw
     End Function
 
     Protected Overrides Sub Dispose(disposing As Boolean)
+        ' 最后在文件末尾写入offset索引
+        '
+        ' 索引按照time降序排序，结构为
+        ' 
+        ' - double time
+        ' - long() 按照modules顺序排序的offset值的集合
+        '
+        Dim times = offsets.GroupBy(Function(d) d.time) _
+            .OrderByDescending(Function(time) time.Key) _
+            .Select(Function(time)
+                        Dim moduleOffsets = time.ToDictionary(Function(m) m.moduleName)
+                        Dim offsets As Long() = moduleOffsets _
+                            .Takes(moduleIndex.Objects) _
+                            .Select(Function(m) m.offset) _
+                            .ToArray
+
+                        Return (time:=time.Key, offsets:=offsets)
+                    End Function)
+
+        For Each time In times
+            Call stream.Write(time.time)
+            Call stream.Write(time.offsets)
+        Next
+
         Call stream.Flush()
         Call stream.Close()
         Call stream.Dispose()
