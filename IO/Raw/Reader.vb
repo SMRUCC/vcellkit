@@ -2,6 +2,7 @@
 Imports Microsoft.VisualBasic.ComponentModel.Collection
 Imports Microsoft.VisualBasic.ComponentModel.Ranges
 Imports Microsoft.VisualBasic.Data.IO
+Imports Microsoft.VisualBasic.Language
 Imports [Module] = Microsoft.VisualBasic.ComponentModel.DataSourceModel.SchemaMaps.DataFrameColumnAttribute
 
 Public Class Reader : Inherits Raw
@@ -52,14 +53,35 @@ Public Class Reader : Inherits Raw
 
         ' read index
         Dim offset& = stream.ReadInt64
+        Dim indexSelector As New List(Of NumericTagged(Of Dictionary(Of String, Long)))
 
         ' 索引按照time降序排序，结构为
         ' 
         ' - double time
         ' - integer index，从零开始的索引号
         ' - long() 按照modules顺序排序的offset值的集合
+        ' - long 当前数据块的起始的offset偏移
+        '
+        Call stream.Seek(offset, SeekOrigin.Begin)
 
+        Do While True
+            Dim time As Double = stream.ReadDouble
+            Dim index% = stream.ReadInt32
+            Dim offsets&() = stream.ReadInt64s(moduleIndex.Count)
 
+            indexSelector += New NumericTagged(Of Dictionary(Of String, Long)) With {
+                .tag = time,
+                .value = moduleIndex _
+                    .ToDictionary(Function(m) m.value,
+                                  Function(i) offsets(i))
+            }
+
+            If index = 0 Then
+                Exit Do
+            End If
+        Loop
+
+        offsetIndex = New OrderSelector(Of NumericTagged(Of Dictionary(Of String, Long)))(indexSelector)
 
         Return Me
     End Function
