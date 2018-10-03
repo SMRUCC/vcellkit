@@ -1,5 +1,6 @@
 ﻿Imports System.IO
 Imports System.Reflection
+Imports System.Runtime.CompilerServices
 Imports Microsoft.VisualBasic.ComponentModel.Collection
 Imports Microsoft.VisualBasic.ComponentModel.Ranges
 Imports Microsoft.VisualBasic.Data.csv.IO
@@ -14,6 +15,11 @@ Public Class Reader : Inherits CellularModules
     ''' 按照时间升序排序的
     ''' </summary>
     Dim offsetIndex As OrderSelector(Of NumericTagged(Of Dictionary(Of String, Long)))
+
+    <MethodImpl(MethodImplOptions.AggressiveInlining)>
+    Public Function AllTimePoints() As IEnumerable(Of Double)
+        Return offsetIndex.Select(Function(t) t.tag)
+    End Function
 
     Sub New(input As Stream)
         stream = New BinaryDataReader(input)
