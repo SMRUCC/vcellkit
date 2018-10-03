@@ -85,7 +85,8 @@ Public Class Writer : Inherits Raw
         Return Me
     End Function
 
-    Protected Overrides Sub Dispose(disposing As Boolean)
+    Private Sub writeIndex()
+        '
         ' 最后在文件末尾写入offset索引
         '
         ' 索引按照time降序排序，结构为
@@ -109,6 +110,10 @@ Public Class Writer : Inherits Raw
             Call stream.Write(time.time)
             Call stream.Write(time.offsets)
         Next
+    End Sub
+
+    Protected Overrides Sub Dispose(disposing As Boolean)
+        Call writeIndex()
 
         Call stream.Flush()
         Call stream.Close()
