@@ -1,13 +1,14 @@
 ﻿Imports System.IO
+Imports System.Reflection
 Imports Microsoft.VisualBasic.ComponentModel.Collection
 Imports Microsoft.VisualBasic.ComponentModel.Ranges
+Imports Microsoft.VisualBasic.Data.csv.IO
 Imports Microsoft.VisualBasic.Data.IO
 Imports Microsoft.VisualBasic.Language
 
 Public Class Reader : Inherits Raw
 
     ReadOnly stream As BinaryDataReader
-    ReadOnly moduleIndex As New Index(Of String)
 
     ''' <summary>
     ''' 按照时间升序排序的
@@ -19,10 +20,11 @@ Public Class Reader : Inherits Raw
     End Sub
 
     Public Function LoadIndex() As Reader
-        Dim modules = Me.GetModuleReader
+        Dim modules As Dictionary(Of String, PropertyInfo) = Me.GetModuleReader
 
         Call stream.Seek(0, SeekOrigin.Begin)
         Call moduleIndex.Clear()
+        Call Me.modules.Clear()
 
         If stream.ReadString(Magic.Length) <> Magic Then
             Throw New InvalidDataException("Invalid magic string!")
@@ -86,19 +88,38 @@ Public Class Reader : Inherits Raw
         Dim index = offsetIndex.Find(time, Function(t) t.tag)
         Dim offset As Long = index.value([module])
 
-        Return ReadModule([module], offset)
+        Return ReadModule(offset).data
     End Function
 
-    Public Function ReadModule(module$, offset&) As Dictionary(Of String, Double)
+    Public Function ReadModule(offset As Long) As (time#, data As Dictionary(Of String, Double))
         ' - double time 时间值
         ' - byte 在header之中的module的索引号
         ' - double() data块，每一个值的顺序是和header之中的id排布顺序是一样的，长度和header之中的id列表保持一致
+        Dim time As Double = stream.ReadDouble
+        Dim moduleIndex As Integer = stream.ReadByte
+        Dim list As Index(Of String) = modules(Me.moduleIndex(index:=moduleIndex))
+        Dim data#() = stream.ReadDoubles(list.Count)
+        Dim values = list.ToDictionary(Function(id) id.value, Function(i) data(i))
 
+        Return (time, values)
     End Function
 
-    Public Iterator Function PopulateFrames() As IEnumerable(Of Dictionary(Of String, Dictionary(Of String, Double)))
+    Public Iterator Function PopulateFrames() As IEnumerable(Of (time#, frame As Dictionary(Of DataSet)))
         For Each timeFrame In offsetIndex
+            Dim time# = timeFrame.tag
+            Dim frame As New Dictionary(Of DataSet)
 
+            For Each [module] As String In moduleIndex.Objects
+                Dim offset& = timeFrame.value([module])
+                Dim data = ReadModule(offset).data
+
+                frame([module]) = New DataSet With {
+                    .ID = [module],
+                    .Properties = data
+                }
+            Next
+
+            Yield (time, frame)
         Next
     End Function
 End Class

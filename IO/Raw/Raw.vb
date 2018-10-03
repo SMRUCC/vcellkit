@@ -12,6 +12,9 @@ Public Class Raw : Implements IDisposable
 
     Public Const Magic$ = "GCModeller"
 
+    Protected ReadOnly modules As New Dictionary(Of String, Index(Of String))
+    Protected ReadOnly moduleIndex As New Index(Of String)
+
 #Region "Cellular Modules"
 
     ''' <summary>

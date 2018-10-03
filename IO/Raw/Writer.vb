@@ -6,7 +6,6 @@ Imports Microsoft.VisualBasic.ComponentModel.DataSourceModel
 Imports Microsoft.VisualBasic.Data.IO
 Imports Microsoft.VisualBasic.Language
 Imports Microsoft.VisualBasic.Text
-Imports [Module] = Microsoft.VisualBasic.ComponentModel.DataSourceModel.SchemaMaps.DataFrameColumnAttribute
 
 ''' <summary>
 ''' 写数据模块
@@ -14,8 +13,6 @@ Imports [Module] = Microsoft.VisualBasic.ComponentModel.DataSourceModel.SchemaMa
 Public Class Writer : Inherits Raw
 
     ReadOnly stream As BinaryDataWriter
-    ReadOnly modules As New Dictionary(Of String, Index(Of String))
-    ReadOnly moduleIndex As New Index(Of String)
 
     ''' <summary>
     ''' 写在文件最末尾的，用于建立二叉树索引？
