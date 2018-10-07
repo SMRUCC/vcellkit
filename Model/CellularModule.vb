@@ -1,10 +1,11 @@
 ﻿Imports SMRUCC.genomics.Metagenomics
 
 ''' <summary>
-''' A cellular system consist of two features:
+''' A cellular system consist of three features:
 ''' 
 ''' + Genotype
 ''' + Phenotype
+''' + Regulations
 ''' 
 ''' </summary>
 Public Structure CellularModule
@@ -19,5 +20,6 @@ Public Structure CellularModule
     ''' Metabolome
     ''' </summary>
     Public Phenotype As Phenotype
+    Public Regulations As Regulation()
 
 End Structure
