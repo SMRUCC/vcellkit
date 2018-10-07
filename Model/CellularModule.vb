@@ -11,7 +11,13 @@ Public Structure CellularModule
 
     Public Taxonomy As Taxonomy
 
+    ''' <summary>
+    ''' Genome
+    ''' </summary>
     Public Genotype As Genotype
+    ''' <summary>
+    ''' Metabolome
+    ''' </summary>
     Public Phenotype As Phenotype
 
 End Structure
