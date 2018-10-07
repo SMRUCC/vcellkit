@@ -1,3 +1,6 @@
-﻿Public Class Genotype
+﻿Public Structure Genotype
 
-End Class
+    Public CentralDogmas As CentralDogma()
+
+End Structure
+
