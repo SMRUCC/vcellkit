@@ -53,11 +53,47 @@ Imports SMRUCC.genomics.Data.Regprecise
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model
 Imports SMRUCC.genomics.Metagenomics
 
+''' <summary>
+''' 编译器的作用就是进行数据模型和其他的基础模块之间的解耦和作用
+''' 通过这个编译器模块，可以将模型文件模块与其他的模块之间的依赖程度减少
+''' 这样子在模拟计算分析引擎模块之中引用模型文件模块就可以不需要引用额外的其他
+''' 的模块代码的，方便进行数据计算模拟引擎的调试工作
+''' </summary>
 Public Module Workflow
 
     <Extension>
-    Public Function AssemblingRegulationNetwork(model As CellularModule, genome As GBFF.File, regulations As RegulationFootprint()) As CellularModule
+    Private Function evalEffects(reg As RegulationFootprint) As Double
+        If reg.mode.StringEmpty Then
+            Return 0.25
+        End If
 
+        If reg.mode.TextEquals("repressor") Then
+            Return -1
+        ElseIf reg.mode.TextEquals("activator") Then
+            Return 1
+        Else
+            Return 0.25
+        End If
+    End Function
+
+    <Extension>
+    Public Function AssemblingRegulationNetwork(model As CellularModule, regulations As RegulationFootprint()) As CellularModule
+        Dim genes = model.Genotype.CentralDogmas.ToDictionary
+
+        model.Regulations = model.Regulations _
+            .AsList + regulations _
+            .Select(Function(reg)
+                        ' 调控的过程为中心法则的转录过程
+                        Return New Regulation With {
+                            .effects = reg.evalEffects,
+                            .regulator = reg.regulator,
+                            .type = Processes.Transcription,
+                            .name = reg.biological_process,
+                            .process = genes(reg.regulated).ToString
+                        }
+                    End Function)
+
+        Return model
     End Function
 
     ''' <summary>

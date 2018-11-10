@@ -42,8 +42,11 @@
 Imports System.Runtime.CompilerServices
 Imports Microsoft.VisualBasic.Linq
 Imports Microsoft.VisualBasic.Text.Xml.Models
+Imports SMRUCC.genomics.Assembly.NCBI.GenBank
+Imports SMRUCC.genomics.Assembly.NCBI.GenBank.TabularFormat.ComponentModels
 Imports SMRUCC.genomics.ComponentModel.EquaionModel.DefaultTypes
 Imports SMRUCC.genomics.Data
+Imports SMRUCC.genomics.Data.Regprecise
 Imports SMRUCC.genomics.GCModeller.Assembly.GCMarkupLanguage.v2
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model
 Imports Excel = Microsoft.VisualBasic.MIME.Office.Excel.File
@@ -51,7 +54,7 @@ Imports XmlReaction = SMRUCC.genomics.GCModeller.Assembly.GCMarkupLanguage.v2.Re
 
 Public Module Extensions
 
-    <Extension> Public Function ToMarkup(model As CellularModule, KEGG As RepositoryArguments) As VirtualCell
+    <Extension> Public Function ToMarkup(model As CellularModule, genome As GBFF.File, KEGG As RepositoryArguments, regulations As RegulationFootprint()) As VirtualCell
         Dim KOgenes As Dictionary(Of String, CentralDogma) = model _
             .Genotype _
             .CentralDogmas _
@@ -74,6 +77,12 @@ Public Module Extensions
 
         Return New VirtualCell With {
             .Taxonomy = model.Taxonomy,
+            .Genome = New Genome With {
+                .genes = genome.getGenes.ToArray,
+                .regulations = model _
+                    .getTFregulations(regulations) _
+                    .ToArray
+            },
             .MetabolismStructure = New MetabolismStructure With {
                 .Reactions = model _
                     .Phenotype _
@@ -124,6 +133,50 @@ Public Module Extensions
                     .ToArray
             }
         }
+    End Function
+
+    <Extension>
+    Private Iterator Function getGenes(genome As GBFF.File) As IEnumerable(Of Gene)
+        For Each gene As GeneBrief In genome.GbffToPTT(ORF:=False).GeneObjects
+            Yield New Gene With {
+                .left = gene.Location.Left,
+                .right = gene.Location.Right,
+                .locus_tag = gene.Synonym,
+                .product = gene.Product,
+                .protein_id = gene.PID,
+                .strand = gene.Location.Strand.GetBriefCode
+            }
+        Next
+    End Function
+
+    <Extension>
+    Private Iterator Function getTFregulations(model As CellularModule, regulations As RegulationFootprint()) As IEnumerable(Of TranscriptionRegulation)
+        Dim centralDogmas = model.Genotype.CentralDogmas.ToDictionary(Function(d) d.geneID)
+
+        For Each reg As RegulationFootprint In regulations
+            Dim process As CentralDogma = centralDogmas.TryGetValue(reg.regulated)
+
+            If process.geneID.StringEmpty Then
+                Call $"{reg.regulated} process not found!".Warning
+            End If
+
+            Yield New TranscriptionRegulation With {
+                .biological_process = reg.biological_process,
+                .effector = reg.effector,
+                .mode = reg.mode,
+                .regulator = reg.regulator,
+                .target = reg.regulated,
+                .motif = New Motif With {
+                    .family = reg.family,
+                    .left = reg.motif.Left,
+                    .right = reg.motif.Right,
+                    .strand = reg.motif.Strand.GetBriefCode,
+                    .sequence = reg.sequenceData,
+                    .distance = reg.distance
+                },
+                .centralDogma = process.ToString
+            }
+        Next
     End Function
 
     <Extension>
