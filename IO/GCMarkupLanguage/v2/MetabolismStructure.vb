@@ -67,6 +67,7 @@
 
 #End Region
 
+Imports System.Runtime.CompilerServices
 Imports System.Xml.Serialization
 Imports Microsoft.VisualBasic.ComponentModel
 Imports Microsoft.VisualBasic.ComponentModel.Collection.Generic
@@ -86,12 +87,12 @@ Namespace v2
         ''' 物种注释信息
         ''' </summary>
         ''' <returns></returns>
-        Public Property Taxonomy As Taxonomy
+        Public Property taxonomy As Taxonomy
         ''' <summary>
         ''' 基因组结构模型，包含有基因的列表，以及转录调控网络
         ''' </summary>
         ''' <returns></returns>
-        Public Property Genome As Genome
+        Public Property genome As Genome
 
         ''' <summary>
         ''' 代谢组网络结构
@@ -110,7 +111,7 @@ Namespace v2
         End Sub
 
         Public Overrides Function ToString() As String
-            Return Taxonomy.ToString
+            Return taxonomy.ToString
         End Function
 
     End Class
@@ -119,6 +120,10 @@ Namespace v2
     Public Class MetabolismStructure
 
         <XmlArray("compounds")> Public Property Compounds As Compound()
+        ''' <summary>
+        ''' 在这个属性之中包含有所有的代谢反应过程的定义
+        ''' </summary>
+        ''' <returns></returns>
         <XmlArray("reactions")> Public Property Reactions As Reaction()
 
         ''' <summary>
@@ -128,7 +133,8 @@ Namespace v2
         ''' <returns></returns>
         <XmlArray("enzymes")> Public Property Enzymes As Enzyme()
 
-        <XmlArray("pathwayMaps")> Public Property Pathways As Pathway()
+        <XmlArray("pathwayMaps")>
+        Public Property maps As FunctionalCategory()
 
     End Class
 
@@ -154,14 +160,40 @@ Namespace v2
 
     End Class
 
+    Public Class FunctionalCategory
+
+        <XmlAttribute>
+        Public Property category As String
+        <XmlElement("pathway")>
+        Public Property pathways As Pathway()
+
+        Public Overrides Function ToString() As String
+            Return category
+        End Function
+
+    End Class
+
     <XmlType("pathway", [Namespace]:=VirtualCell.GCMarkupLanguage)>
     Public Class Pathway : Implements INamedValue
 
         <XmlAttribute> Public Property ID As String Implements IKeyedEntity(Of String).Key
         <XmlAttribute> Public Property name As String
 
+        ''' <summary>
+        ''' 属性的值含义如下：
+        ''' 
+        ''' + <see cref="[Property].name"/>: protein_id
+        ''' + <see cref="[Property].value"/>: KO number
+        ''' + <see cref="[Property].Comment"/>: gene locus_tag
+        ''' </summary>
+        ''' <returns></returns>
         <XmlElement("enzyme")>
         Public Property enzymes As [Property]()
+
+        <MethodImpl(MethodImplOptions.AggressiveInlining)>
+        Public Overrides Function ToString() As String
+            Return $"[{ID}] {name} with {enzymes.Length} enzymes"
+        End Function
 
     End Class
 
