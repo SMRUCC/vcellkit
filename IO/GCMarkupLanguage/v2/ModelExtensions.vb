@@ -1,5 +1,6 @@
 ﻿Imports System.Runtime.CompilerServices
 Imports Microsoft.VisualBasic.ComponentModel.DataSourceModel
+Imports Microsoft.VisualBasic.Language
 Imports Microsoft.VisualBasic.Linq
 Imports SMRUCC.genomics.ComponentModel.EquaionModel.DefaultTypes
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model
@@ -36,6 +37,7 @@ Namespace v2
                 .ToDictionary(Function(enzyme) enzyme.geneID)
             Dim rnaTable As Dictionary(Of String, NamedValue(Of RNATypes))
             Dim RNA As NamedValue(Of RNATypes)
+            Dim proteinId$
 
             For Each replicon In model.genome.replicons
                 genomeName = replicon.genomeName
@@ -53,17 +55,19 @@ Namespace v2
                 For Each gene As gene In replicon.genes
                     If rnaTable.ContainsKey(gene.locus_tag) Then
                         RNA = rnaTable(gene.locus_tag)
+                        proteinId = Nothing
                     Else
                         ' 枚举的默认值为mRNA
                         RNA = New NamedValue(Of RNATypes) With {
                             .Name = gene.locus_tag
                         }
+                        proteinId = gene.protein_id Or $"{gene.locus_tag}::peptide".AsDefault
                     End If
 
                     Yield New CentralDogma With {
                         .replicon = genomeName,
-                        .polypeptide = gene.protein_id,
                         .geneID = gene.locus_tag,
+                        .polypeptide = proteinId,
                         .orthology = enzymes.TryGetValue(.geneID)?.KO,
                         .RNA = RNA
                     }
