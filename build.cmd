@@ -14,22 +14,34 @@ SET br08901_maps="P:\91001_GB\KGML\br08901"
 SET KEGG_cpds="P:\91001_GB\KGML\KEGG_cpd"
 SET br08201_network="P:\91001_GB\KGML\br08201"
 
+REM config myva COG database files location
+SET myva="E:\GCModeller-repo\COGs\Myva\myva"
+SET whog="E:\GCModeller-repo\COGs\Myva\whog.XML"
+
+REM config for UniProt reference sequence database
+SET uniprot="P:\91001_GB\KO\uniprot-bacteria.KO.faa"
+
+REM config for the component output directory
+SET KO_base=P:\91001_GB\KO
+SET COG_base=P:\91001_GB\COG
+
+REM first of all
 REM Extract sequence data and genome context files
 foreach *.gbk in %genome% do localblast /Export.gb /gb $file /flat
 
 REM KO annotation base on SBH
 
 REM blastp procedures
-makeblastdb -in "P:\91001_GB\KO\uniprot-bacteria.KO.faa" -dbtype prot
+makeblastdb -in "%KO_base%\uniprot-bacteria.KO.faa" -dbtype prot
 foreach dir in %genome% do makeblastdb -in "$file/Yersinia_pestis_biovar_Microtus_str._91001.faa" -dbtype prot
-foreach dir in %genome% do blastp -query "$file/Yersinia_pestis_biovar_Microtus_str._91001.faa" -db "P:\91001_GB\KO\uniprot-bacteria.KO.faa" -evalue 1e-5 -num_threads 8 -out "P:\91001_GB\KO\blastp\$basename.txt"
-foreach *.txt in "P:\91001_GB\KO\blastp" do localblast /SBH.Export.Large /in $file /out "P:\91001_GB\KO\KO_align_sbh\$basename.csv" /s.pattern "tokens | first" /q.pattern "tokens | 4" /identities 0.15 /coverage 0.5 /top.best
-foreach *.csv in "P:\91001_GB\KO\KO_align_sbh" do eggHTS /proteins.KEGG.plot /in "$file" /field "hit_name" /geneId.field "query_name" /size 2600,2200 /tick -1 /out "P:\91001_GB\KO\KO_profiles\$basename"
+foreach dir in %genome% do blastp -query "$file/Yersinia_pestis_biovar_Microtus_str._91001.faa" -db %uniprot% -evalue 1e-5 -num_threads 8 -out "P:\91001_GB\KO\blastp\$basename.txt"
+foreach *.txt in "%KO_base%\blastp" do localblast /SBH.Export.Large /in $file /out "P:\91001_GB\KO\KO_align_sbh\$basename.csv" /s.pattern "tokens | first" /q.pattern "tokens | 4" /identities 0.15 /coverage 0.5 /top.best
+foreach *.csv in "%KO_base%\KO_align_sbh" do eggHTS /proteins.KEGG.plot /in "$file" /field "hit_name" /geneId.field "query_name" /size 2600,2200 /tick -1 /out "P:\91001_GB\KO\KO_profiles\$basename"
 
 REM COG annotation base on SBH
-foreach dir in %genome% do blastp -query "$file/Yersinia_pestis_biovar_Microtus_str._91001.faa" -db "E:\GCModeller-repo\COGs\Myva\myva" -evalue 1e-5 -num_threads 8 -out "P:\91001_GB\COG\blastp\$basename.txt"
-foreach *.txt in "P:\91001_GB\COG\blastp" do localblast /COG.myva /blastp $file /whog "E:\GCModeller-repo\COGs\Myva\whog.XML" /top.best /grep "tokens | 4" /out "P:\91001_GB\COG\profiles\$basename.csv"
-foreach *.csv in "P:\91001_GB\COG\profiles" do eggHTS /COG.profiling.plot /in "$file" /size 2000,1300 /out "P:\91001_GB\COG\$basename.png"
+foreach dir in %genome% do blastp -query "$file/Yersinia_pestis_biovar_Microtus_str._91001.faa" -db %myva% -evalue 1e-5 -num_threads 8 -out "%COG_base%\blastp\$basename.txt"
+foreach *.txt in "%COG_base%\blastp" do localblast /COG.myva /blastp $file /whog %whog% /top.best /grep "tokens | 4" /out "%COG_base%\profiles\$basename.csv"
+foreach *.csv in "%COG_base%\profiles" do eggHTS /COG.profiling.plot /in "$file" /size 2000,1300 /out "P:\91001_GB\COG\$basename.png"
 
 REM motif predicts
 foreach dir in %genome% do makeblastdb -in "$file/Yersinia_pestis_biovar_Microtus_str._91001.fna" -dbtype nucl
