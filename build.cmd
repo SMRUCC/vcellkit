@@ -1,6 +1,18 @@
 @echo off
 
+REM Requirements
+REM
+REM 1. GCModeller X64
+REM 2. CMD.Internals toolkits
+
+REM config the genome data source and the virtual cell model output path
 SET genome="P:\91001_GB\genome"
+SET model_output="P:\91001_GB\NC_005810.GCmarkup"
+
+REM config KEGG repository data directory location at here
+SET br08901_maps="P:\91001_GB\KGML\br08901"
+SET KEGG_cpds="P:\91001_GB\KGML\KEGG_cpd"
+SET br08201_network="P:\91001_GB\KGML\br08201"
 
 REM Extract sequence data and genome context files
 foreach *.gbk in %genome% do localblast /Export.gb /gb $file /flat
@@ -56,12 +68,16 @@ mapplot --Draw.ChromosomeMap.genbank /gb "P:\91001_GB\genome\NC_005810.gbk" /mot
 
 REM compile virtual cell data model
 
+SET KO_union="P:\91001_GB\KO\NC_005810.KO.csv"
+SET TF_union="P:\91001_GB\transcript_regulations\NC_005810.tf_regulations.csv"
+SET GB_union="P:\91001_GB\NC_005810.genbank"
+
 REM first of all, union the chromosome and plasmids genome data
-ncbi_tools /gbff.union /in %genome% /out "P:\91001_GB\NC_005810.genbank"
+ncbi_tools /gbff.union /in %genome% /out %GB_union%
 REM and then, union all KEGG annotation data
-Excel /rbind /in "P:\91001_GB\KO\KO_profiles\*\KOCatalogs.csv" /out "P:\91001_GB\KO\NC_005810.KO.csv"
+Excel /rbind /in "P:\91001_GB\KO\KO_profiles\*\KOCatalogs.csv" /out %KO_union%
 REM at last, union all of the TF-regulation data
-Excel /rbind /in "P:\91001_GB\transcript_regulations\result_networks" /out "P:\91001_GB\transcript_regulations\NC_005810.tf_regulations.csv"
+Excel /rbind /in "P:\91001_GB\transcript_regulations\result_networks" /out %TF_union%
 
 REM finally, we are able to build this virtual cell model
-GCC /compile.KEGG /in "P:\91001_GB\NC_005810.genbank" /KO "P:\91001_GB\KO\NC_005810.KO.csv" /maps "P:\91001_GB\KGML\br08901" /compounds "P:\91001_GB\KGML\KEGG_cpd" /reactions "P:\91001_GB\KGML\br08201" /regulations "P:\91001_GB\transcript_regulations\NC_005810.tf_regulations.csv" /out "P:\91001_GB\NC_005810.GCmarkup"
+GCC /compile.KEGG /in %GB_union% /KO %KO_union% /maps %br08901_maps% /compounds %KEGG_cpds% /reactions %br08201_network% /regulations %TF_union% /out %model_output%
