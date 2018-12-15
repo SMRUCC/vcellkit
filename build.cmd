@@ -1,13 +1,16 @@
 @echo off
 
+SET base=P:\huang
+SET sp_name=Genus_species
+
 REM Requirements
 REM
 REM 1. GCModeller X64
 REM 2. CMD.Internals toolkits
 
 REM config the genome data source and the virtual cell model output path
-SET genome="P:\91001_GB\genome"
-SET model_output="P:\91001_GB\NC_005810.GCmarkup"
+SET genome="%base%\genome"
+SET model_output="%base%\bacterial.GCmarkup"
 
 REM config KEGG repository data directory location at here
 SET br08901_maps="P:\91001_GB\KGML\br08901"
@@ -22,8 +25,9 @@ REM config for UniProt reference sequence database
 SET uniprot="P:\91001_GB\KO\uniprot-bacteria.KO.faa"
 
 REM config for the component output directory
-SET KO_base=P:\91001_GB\KO
-SET COG_base=P:\91001_GB\COG
+SET KO_base=%base%\KO
+SET COG_base=%base%\COG
+SET TF_base=%base%\transcript_regulations
 
 REM first of all
 REM Extract sequence data and genome context files
@@ -33,31 +37,31 @@ REM KO annotation base on SBH
 
 REM blastp procedures
 makeblastdb -in "%KO_base%\uniprot-bacteria.KO.faa" -dbtype prot
-foreach dir in %genome% do makeblastdb -in "$file/Yersinia_pestis_biovar_Microtus_str._91001.faa" -dbtype prot
-foreach dir in %genome% do blastp -query "$file/Yersinia_pestis_biovar_Microtus_str._91001.faa" -db %uniprot% -evalue 1e-5 -num_threads 8 -out "P:\91001_GB\KO\blastp\$basename.txt"
-foreach *.txt in "%KO_base%\blastp" do localblast /SBH.Export.Large /in $file /out "P:\91001_GB\KO\KO_align_sbh\$basename.csv" /s.pattern "tokens | first" /q.pattern "tokens | 4" /identities 0.15 /coverage 0.5 /top.best
-foreach *.csv in "%KO_base%\KO_align_sbh" do eggHTS /proteins.KEGG.plot /in "$file" /field "hit_name" /geneId.field "query_name" /size 2600,2200 /tick -1 /out "P:\91001_GB\KO\KO_profiles\$basename"
+foreach dir in %genome% do makeblastdb -in "$file/%sp_name%.faa" -dbtype prot
+foreach dir in %genome% do blastp -query "$file/%sp_name%.faa" -db %uniprot% -evalue 1e-5 -num_threads 8 -out "%KO_base%\blastp\$basename.txt"
+foreach *.txt in "%KO_base%\blastp" do localblast /SBH.Export.Large /in $file /out "%KO_base%\KO_align_sbh\$basename.csv" /s.pattern "tokens | first" /q.pattern "tokens | 4" /identities 0.15 /coverage 0.5 /top.best
+foreach *.csv in "%KO_base%\KO_align_sbh" do eggHTS /proteins.KEGG.plot /in "$file" /field "hit_name" /geneId.field "query_name" /size 2600,2200 /tick -1 /out "%KO_base%\KO_profiles\$basename"
 
 REM COG annotation base on SBH
-foreach dir in %genome% do blastp -query "$file/Yersinia_pestis_biovar_Microtus_str._91001.faa" -db %myva% -evalue 1e-5 -num_threads 8 -out "%COG_base%\blastp\$basename.txt"
+foreach dir in %genome% do blastp -query "$file/%sp_name%.faa" -db %myva% -evalue 1e-5 -num_threads 8 -out "%COG_base%\blastp\$basename.txt"
 foreach *.txt in "%COG_base%\blastp" do localblast /COG.myva /blastp $file /whog %whog% /top.best /grep "tokens | 4" /out "%COG_base%\profiles\$basename.csv"
-foreach *.csv in "%COG_base%\profiles" do eggHTS /COG.profiling.plot /in "$file" /size 2000,1300 /out "P:\91001_GB\COG\$basename.png"
+foreach *.csv in "%COG_base%\profiles" do eggHTS /COG.profiling.plot /in "$file" /size 2000,1300 /out "%COG_base%\$basename.png"
 
 REM motif predicts
-foreach dir in %genome% do makeblastdb -in "$file/Yersinia_pestis_biovar_Microtus_str._91001.fna" -dbtype nucl
+foreach dir in %genome% do makeblastdb -in "$file/%sp_name%.fna" -dbtype nucl
 
 REM blastn mappings
 REM no evalue filter
-foreach dir in %genome% do blastn -query "P:\91001_GB\transcript_regulations\Regprecise.motifs.fasta" -db "$file/Yersinia_pestis_biovar_Microtus_str._91001.fna" -word_size 5 -out "P:\91001_GB\transcript_regulations\motifs\blastn\$basename.txt" /@set "/parallel=8;/clr=false"
+foreach dir in %genome% do blastn -query "P:\91001_GB\transcript_regulations\Regprecise.motifs.fasta" -db "$file/%sp_name%.fna" -word_size 5 -out "%TF_base%\motifs\blastn\$basename.txt" /@set "/parallel=8;/clr=false"
 
 REM export blastn mapping result and do motif tree cluster for the predictions
-foreach *.txt in "P:\91001_GB\transcript_regulations\motifs\blastn" do localblast /Export.blastnMaps /in $file /out "P:\91001_GB\transcript_regulations\motifs\mappings\$basename.csv"
-foreach *.csv in "P:\91001_GB\transcript_regulations\motifs\mappings" do VirtualFootprint /scan.blastn.map.motifsite /in $file /hits.base 5 /out "P:\91001_GB\transcript_regulations\motifs\sites\$basename.csv"
-foreach *.csv in "P:\91001_GB\transcript_regulations\motifs\sites" do VirtualFootprint /Site.match.genes /in $file /genome "P:\91001_GB\genome\$basename.gbk" /max.dist 300 /out "P:\91001_GB\transcript_regulations\motifs\contexts\$basename.csv" /skip.RNA
+foreach *.txt in "%TF_base%\motifs\blastn" do localblast /Export.blastnMaps /in $file /out "%TF_base%\motifs\mappings\$basename.csv"
+foreach *.csv in "%TF_base%\motifs\mappings" do VirtualFootprint /scan.blastn.map.motifsite /in $file /hits.base 5 /out "%TF_base%\motifs\sites\$basename.csv"
+foreach *.csv in "%TF_base%\motifs\sites" do VirtualFootprint /Site.match.genes /in $file /genome "%genome%\$basename.gbk" /max.dist 300 /out "%TF_base%\motifs\contexts\$basename.csv" /skip.RNA
 
 REM TF regulators predictions
 makeblastdb -in "P:\91001_GB\transcript_regulations\regulators\KEGG_genomes.fasta" -dbtype prot
-foreach dir in %genome% do blastp -query "$file/Yersinia_pestis_biovar_Microtus_str._91001.faa" -db "P:\91001_GB\transcript_regulations\regulators\KEGG_genomes.fasta" -evalue 1e-5 -num_threads 7 -out "P:\91001_GB\transcript_regulations\regulators\blastp\$basename.txt"
+foreach dir in %genome% do blastp -query "$file/%sp_name%.faa" -db "P:\91001_GB\transcript_regulations\regulators\KEGG_genomes.fasta" -evalue 1e-5 -num_threads 7 -out "%TF_base%\regulators\blastp\$basename.txt"
 
 REM sbh method
 REM due to the reason of orthology can be inherits from multiple source
