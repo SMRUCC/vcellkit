@@ -8,6 +8,8 @@ REM
 REM 1. GCModeller X64
 REM 2. CMD.Internals toolkits
 
+REM Whitespace and non-ascii character and symbols should avoid in the path string value.
+
 REM config the genome data source and the virtual cell model output path
 SET genome="%base%\genome"
 SET chromosome_gbk=%genome%\huang.gbk
@@ -30,6 +32,10 @@ SET KO_base=%base%\KO
 SET COG_base=%base%\COG
 SET TF_base=%base%\transcript_regulations
 
+mkdir %KO_base%
+mkdir %COG_base%
+mkdir %TF_base%
+
 REM first of all
 REM Extract sequence data and genome context files
 foreach *.gbk in %genome% do localblast /Export.gb /gb $file /flat
@@ -37,9 +43,12 @@ foreach *.gbk in %genome% do localblast /Export.gb /gb $file /flat
 REM KO annotation base on SBH
 
 REM blastp procedures
-makeblastdb -in "%KO_base%\uniprot-bacteria.KO.faa" -dbtype prot
+makeblastdb -in "%uniprot%" -dbtype prot
+mkdir "%KO_base%\blastp"
+
 foreach dir in %genome% do makeblastdb -in "$file/%sp_name%.faa" -dbtype prot
 foreach dir in %genome% do blastp -query "$file/%sp_name%.faa" -db %uniprot% -evalue 1e-5 -num_threads 8 -out "%KO_base%\blastp\$basename.txt"
+REM and then export raw blastp output result using GCModeller CLI tools.
 foreach *.txt in "%KO_base%\blastp" do localblast /SBH.Export.Large /in $file /out "%KO_base%\KO_align_sbh\$basename.csv" /s.pattern "tokens | first" /q.pattern "tokens | 4" /identities 0.15 /coverage 0.5 /top.best
 foreach *.csv in "%KO_base%\KO_align_sbh" do eggHTS /proteins.KEGG.plot /in "$file" /field "hit_name" /geneId.field "query_name" /size 2600,2200 /tick -1 /out "%KO_base%\KO_profiles\$basename"
 
