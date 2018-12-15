@@ -10,6 +10,7 @@ REM 2. CMD.Internals toolkits
 
 REM config the genome data source and the virtual cell model output path
 SET genome="%base%\genome"
+SET chromosome_gbk=%genome%\huang.gbk
 SET model_output="%base%\bacterial.GCmarkup"
 
 REM config KEGG repository data directory location at here
@@ -67,20 +68,20 @@ REM sbh method
 REM due to the reason of orthology can be inherits from multiple source
 REM So in this step, no top best hits limitation
 REM This will resulted multiple genome source regulation network that will be created in next step
-foreach *.txt in "P:\91001_GB\transcript_regulations\regulators\blastp" do localblast /SBH.Export.Large /in $file /out "P:\91001_GB\transcript_regulations\regulators\sbh\$basename.csv" /s.pattern "tokens ' ' first" /q.pattern "tokens | 4" /identities 0.6 /coverage 0.8
+foreach *.txt in "%TF_base%\regulators\blastp" do localblast /SBH.Export.Large /in $file /out "%TF_base%\regulators\sbh\$basename.csv" /s.pattern "tokens ' ' first" /q.pattern "tokens | 4" /identities 0.6 /coverage 0.8
 
 REM regulator annotations
-foreach *.csv in "P:\91001_GB\transcript_regulations\regulators\sbh" do regprecise /regulators.bbh /bbh $file /regprecise "P:\91001_GB\transcript_regulations\RegpreciseDownloads" /sbh /allow.multiple /description "P:\91001_GB\transcript_regulations\regulators\KEGG_genomes.fasta" /out "P:\91001_GB\transcript_regulations\regulators\mappings\$basename.csv"
+foreach *.csv in "%TF_base%\regulators\sbh" do regprecise /regulators.bbh /bbh $file /regprecise "P:\91001_GB\transcript_regulations\RegpreciseDownloads" /sbh /allow.multiple /description "P:\91001_GB\transcript_regulations\regulators\KEGG_genomes.fasta" /out "%TF_base%\regulators\mappings\$basename.csv"
 
 REM build TF regulation network after we have create the motif site and TF predictions
-foreach *.csv in "P:\91001_GB\transcript_regulations\regulators\mappings" do VirtualFootprint /regulation.footprints /regulator "$file" /footprint "P:\91001_GB\transcript_regulations\motifs\contexts\$basename.csv" /out "P:\91001_GB\transcript_regulations\result_networks\$basename.csv"
+foreach *.csv in "%TF_base%\regulators\mappings" do VirtualFootprint /regulation.footprints /regulator "$file" /footprint "%TF_base%\motifs\contexts\$basename.csv" /out "%TF_base%\result_networks\$basename.csv"
 
 REM TF from chromosome regulates genes from plasmids
-foreach *.csv in "P:\91001_GB\transcript_regulations\motifs\contexts" do VirtualFootprint /regulation.footprints /regulator "P:\91001_GB\transcript_regulations\regulators\mappings\NC_005810.csv" /footprint "$file" /out "P:\91001_GB\transcript_regulations\result_networks\$basename.csv"
+foreach *.csv in "%TF_base%\motifs\contexts" do VirtualFootprint /regulation.footprints /regulator "P:\91001_GB\transcript_regulations\regulators\mappings\NC_005810.csv" /footprint "$file" /out "%TF_base%\result_networks\$basename.csv"
 
 REM chromosome map plot
-mapplot /Config.Template /out "P:\91001_GB\genome\plot\config.inf"
-mapplot --Draw.ChromosomeMap.genbank /gb "P:\91001_GB\genome\NC_005810.gbk" /motifs "P:\91001_GB\transcript_regulations\motifs\contexts\NC_005810.csv" /hide.mics /conf "P:\91001_GB\genome\plot\config.inf" /out "P:\91001_GB\genome\plot" /COG "P:\91001_GB\COG\profiles\NC_005810.csv"
+mapplot /Config.Template /out "%genome%\plot\config.inf"
+mapplot --Draw.ChromosomeMap.genbank /gb "%chromosome_gbk%" /motifs "P:\91001_GB\transcript_regulations\motifs\contexts\NC_005810.csv" /hide.mics /conf "%genome%\plot\config.inf" /out "%genome%\plot" /COG "P:\91001_GB\COG\profiles\NC_005810.csv"
 
 REM compile virtual cell data model
 
@@ -91,9 +92,9 @@ SET GB_union="P:\91001_GB\NC_005810.genbank"
 REM first of all, union the chromosome and plasmids genome data
 ncbi_tools /gbff.union /in %genome% /out %GB_union%
 REM and then, union all KEGG annotation data
-Excel /rbind /in "P:\91001_GB\KO\KO_profiles\*\KOCatalogs.csv" /out %KO_union%
+Excel /rbind /in "%KO_base%\KO_profiles\*\KOCatalogs.csv" /out %KO_union%
 REM at last, union all of the TF-regulation data
-Excel /rbind /in "P:\91001_GB\transcript_regulations\result_networks" /out %TF_union%
+Excel /rbind /in "%TF_base%\result_networks" /out %TF_union%
 
 REM finally, we are able to build this virtual cell model
 GCC /compile.KEGG /in %GB_union% /KO %KO_union% /maps %br08901_maps% /compounds %KEGG_cpds% /reactions %br08201_network% /regulations %TF_union% /out %model_output%
