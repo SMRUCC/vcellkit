@@ -14,10 +14,10 @@ Module Module1
 
         Dim snapshots As New List(Of DataSet)
 
-        For i As Integer = 0 To 100
+        For i As Integer = 0 To 10000
             envir.ContainerIterator()
             snapshots += New DataSet With {
-                .ID = $"#{i}",
+                .ID = i,
                 .Properties = massTable.ToDictionary(Function(m) m.Key, Function(m) m.Value.Value)
             }
         Next
@@ -28,13 +28,15 @@ Module Module1
     End Sub
 
     Private Iterator Function mass() As IEnumerable(Of Factor)
-        Yield New Factor With {.ID = "A", .Value = 100}
-        Yield New Factor With {.ID = "B", .Value = 100}
-        Yield New Factor With {.ID = "C", .Value = 100}
-        Yield New Factor With {.ID = "D", .Value = 100}
-        Yield New Factor With {.ID = "E", .Value = 100}
-        Yield New Factor With {.ID = "F", .Value = 100}
-        Yield New Factor With {.ID = "G", .Value = 100}
+        Yield New Factor With {.ID = "A", .Value = 1000}
+        Yield New Factor With {.ID = "B", .Value = 1000}
+        Yield New Factor With {.ID = "C", .Value = 1000}
+        Yield New Factor With {.ID = "D", .Value = 1000}
+        Yield New Factor With {.ID = "E", .Value = 1000}
+        Yield New Factor With {.ID = "F", .Value = 1000}
+        Yield New Factor With {.ID = "G", .Value = 1000}
+        Yield New Factor With {.ID = "H", .Value = 1000}
+        Yield New Factor With {.ID = "I", .Value = 1000}
     End Function
 
     ''' <summary>
@@ -51,7 +53,7 @@ Module Module1
 
         Yield New Channel(pop({"A", "B"}), pop({"C", "D"})) With {
             .Forward = New Regulation,
-            .Reverse = New Regulation With {.Activation = pop({"B"}).ToArray}}
+            .Reverse = New Regulation With {.Activation = pop({"B", "D"}).ToArray}}
 
         Yield New Channel(pop({"E", "F"}), pop({"A", "G"})) With {
             .Forward = New Regulation,
@@ -66,5 +68,24 @@ Module Module1
         Yield New Channel(pop({"G"}), pop({"E"})) With {
             .Forward = New Regulation With {.Activation = pop({"F"}).ToArray}
         }
+        Yield New Channel(pop({"E"}), pop({"G", "D", "C"})) With {
+            .Forward = New Regulation With {.Activation = pop({"E"}).ToArray},
+            .Reverse = New Regulation With {.Activation = pop({"C", "D"}).ToArray}
+        }
+
+        Yield New Channel(pop({"B", "F"}), pop({"H"})) With {
+            .Forward = New Regulation With {.Activation = pop({"B"}).ToArray},
+            .Reverse = New Regulation With {.Activation = pop({"I", "D"}).ToArray}
+        }
+
+        Yield New Channel(pop({"I"}), pop({"G"})) With {
+           .Forward = New Regulation With {.Activation = pop({"B"}).ToArray},
+           .Reverse = New Regulation With {.Activation = pop({"G", "D"}).ToArray}
+       }
+
+        Yield New Channel(pop({"H"}), pop({"I", "D"})) With {
+           .Forward = New Regulation With {.Activation = pop({"B"}).ToArray},
+           .Reverse = New Regulation With {.Activation = pop({"A"}).ToArray}
+       }
     End Function
 End Module
