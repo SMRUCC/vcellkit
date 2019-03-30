@@ -37,6 +37,17 @@ Public Class Channel
         End Get
     End Property
 
+    Public Sub Transition(regulation As Double, dir As Directions)
+        regulation = regulation * dir
+
+        For Each mass In left
+            mass.Mass.Value -= regulation * mass.Coefficient
+        Next
+        For Each mass In right
+            mass.Mass.Value += regulation * mass.Coefficient
+        Next
+    End Sub
+
     ''' <summary>
     ''' 得到当前的物质内容所能够支撑的最小反应单位
     ''' </summary>
@@ -69,9 +80,9 @@ Public Enum Directions
     ''' <summary>
     ''' 反应过程将不会发生
     ''' </summary>
-    [Stop]
-    LeftToRight
-    RightToLeft
+    [Stop] = 0
+    LeftToRight = 1
+    RightToLeft = -1
 End Enum
 
 ''' <summary>
@@ -86,6 +97,10 @@ Public Class Regulation
     ''' <returns></returns>
     Public Property Inhibition As Variable()
 
+    ''' <summary>
+    ''' 计算出当前的调控效应单位
+    ''' </summary>
+    ''' <returns></returns>
     Public ReadOnly Property Coefficient As Double
         Get
             Dim i = Inhibition.Sum(Function(v) v.Coefficient * v.Mass.Value)
@@ -166,4 +181,40 @@ Public Class Vessel
     ''' <returns></returns>
     Public Property Mass As Factor()
 
+    ''' <summary>
+    ''' 当前的这个微环境的迭代器
+    ''' </summary>
+    Public Sub ContainerIterator()
+        For Each reaction As Channel In Channels
+            ' 不可以使用Where直接在for循环外进行筛选
+            ' 因为环境是不断地变化的
+            Select Case reaction.Direction
+                Case Directions.LeftToRight
+                    ' 消耗左边，产生右边
+                    Dim regulate = reaction.Forward.Coefficient
+
+                    If regulate > 0 Then
+                        ' 当前是具有调控效应的
+                        ' 接着计算最小的反应单位
+                        regulate = reaction.CoverLeft(regulate)
+                    End If
+                    If regulate > 0 Then
+                        ' 当前的过程是可以进行的
+                        ' 则进行物质的转义的计算
+                        Call reaction.Transition(regulate, Directions.LeftToRight)
+                    End If
+                Case Directions.RightToLeft
+                    Dim regulate = reaction.Reverse.Coefficient
+
+                    If regulate > 0 Then
+                        regulate = reaction.CoverRight(regulate)
+                    End If
+                    If regulate > 0 Then
+                        Call reaction.Transition(regulate, Directions.RightToLeft)
+                    End If
+                Case Else
+                    ' no reaction will be happends
+            End Select
+        Next
+    End Sub
 End Class
