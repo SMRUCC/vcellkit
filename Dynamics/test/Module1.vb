@@ -1,4 +1,7 @@
 ﻿Imports Dynamics
+Imports Microsoft.VisualBasic.Data.csv
+Imports Microsoft.VisualBasic.Data.csv.IO
+Imports Microsoft.VisualBasic.Language
 
 Module Module1
 
@@ -9,9 +12,17 @@ Module Module1
             .Channels = reactions(massTable).ToArray
         }
 
+        Dim snapshots As New List(Of DataSet)
+
         For i As Integer = 0 To 100
-            Call envir.ContainerIterator()
+            envir.ContainerIterator()
+            snapshots += New DataSet With {
+                .ID = $"#{i}",
+                .Properties = massTable.ToDictionary(Function(m) m.Key, Function(m) m.Value.Value)
+            }
         Next
+
+        Call snapshots.SaveTo("./test_mass.csv")
 
         Pause()
     End Sub
