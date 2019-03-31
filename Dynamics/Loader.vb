@@ -1,4 +1,5 @@
 ﻿Imports System.Runtime.CompilerServices
+Imports Microsoft.VisualBasic.ComponentModel.TagData
 Imports Microsoft.VisualBasic.Language
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model
 
@@ -40,13 +41,39 @@ Public Module Loader
 
         ' 构建代谢网络
         For Each reaction As Reaction In cell.Phenotype.fluxes
+            For Each compound In reaction.AllCompounds
+                If Not massTable.ContainsKey(compound) Then
+                    massTable(compound) = compound
+                End If
+            Next
 
+            Dim left = reaction.substrates.variables(massTable)
+            Dim right = reaction.products.variables(massTable)
+
+            channels += New Channel(left, right) With {
+                .bounds = reaction.bounds,
+                .ID = reaction.ID,
+                .Forward = New Regulation With {
+                    .Activation = reaction.enzyme.variables(massTable, 1)
+                },
+                .Reverse = New Regulation With {.baseline = 10}
+            }
         Next
 
         Return New Vessel With {
             .Channels = channels,
             .Mass = massTable.Values.ToArray
         }
+    End Function
+
+    <Extension>
+    Private Function variables(compounds As IEnumerable(Of String), massTable As Dictionary(Of String, Factor), factor As Double) As IEnumerable(Of Variable)
+        Return compounds.Select(Function(cpd) massTable.variable(cpd, factor))
+    End Function
+
+    <Extension>
+    Private Function variables(compounds As IEnumerable(Of FactorString(Of Double)), massTable As Dictionary(Of String, Factor)) As IEnumerable(Of Variable)
+        Return compounds.Select(Function(cpd) massTable.variable(cpd.text, cpd.factor))
     End Function
 
     <Extension>
@@ -60,8 +87,8 @@ Public Module Loader
     End Function
 
     <Extension>
-    Private Function variable(massTable As Dictionary(Of String, Factor), mass As String) As Variable
-        Return New Variable(massTable(mass), 1, False)
+    Private Function variable(massTable As Dictionary(Of String, Factor), mass As String, Optional coefficient As Double = 1) As Variable
+        Return New Variable(massTable(mass), coefficient, False)
     End Function
 
     <Extension>
