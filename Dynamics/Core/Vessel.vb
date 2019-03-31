@@ -1,4 +1,5 @@
 ﻿Imports Microsoft.VisualBasic.ComponentModel.DataSourceModel
+Imports Microsoft.VisualBasic.Linq
 
 ''' <summary>
 ''' 一个反应容器，也是一个微环境，这在这个反应容器之中包含有所有的反应过程
@@ -16,8 +17,24 @@ Public Class Vessel
     ''' <returns></returns>
     Public Property Mass As Factor()
 
-    Public Sub Initialize()
+    ''' <summary>
+    ''' 因为在现实中这些反应过程是同时发生的，所以在这里使用这个共享因子来模拟并行事件
+    ''' </summary>
+    Dim shareFactors As (left As Dictionary(Of String, Double), right As Dictionary(Of String, Double))
 
+    Public Sub Initialize()
+        Dim sharedLeft = Channels _
+            .Select(Function(r) r.left) _
+            .IteratesALL _
+            .GroupBy(Function(x) x.Mass.ID) _
+            .ToDictionary(Function(m) m.Key, Function(c) CDbl(c.Count))
+        Dim sharedRight = Channels _
+            .Select(Function(r) r.right) _
+            .IteratesALL _
+            .GroupBy(Function(x) x.Mass.ID) _
+            .ToDictionary(Function(m) m.Key, Function(m) CDbl(m.Count))
+
+        shareFactors = (sharedLeft, sharedRight)
     End Sub
 
     ''' <summary>
@@ -43,7 +60,7 @@ Public Class Vessel
                 If regulate > 0 Then
                     ' 当前是具有调控效应的
                     ' 接着计算最小的反应单位
-                    regulate = reaction.CoverLeft(regulate)
+                    regulate = reaction.CoverLeft(shareFactors.left, regulate)
                 End If
                 If regulate > 0 Then
                     ' 当前的过程是可以进行的
@@ -54,7 +71,7 @@ Public Class Vessel
                 regulate = reaction.Reverse.Coefficient
 
                 If regulate > 0 Then
-                    regulate = reaction.CoverRight(regulate)
+                    regulate = reaction.CoverRight(shareFactors.right, regulate)
                 End If
                 If regulate > 0 Then
                     Call reaction.Transition(regulate, flow)

@@ -6,8 +6,8 @@ Imports Microsoft.VisualBasic.ComponentModel.DataSourceModel.Repository
 ''' </summary>
 Public Class Channel : Implements INamedValue
 
-    Dim left As Variable()
-    Dim right As Variable()
+    Friend left As Variable()
+    Friend right As Variable()
 
     Public Property Forward As Regulation
     Public Property Reverse As Regulation
@@ -24,17 +24,13 @@ Public Class Channel : Implements INamedValue
         End Get
     End Property
 
-    Public ReadOnly Property CoverLeft(Optional regulation As Double = 1) As Double
-        Get
-            Return minimalUnit(left, regulation)
-        End Get
-    End Property
+    Public Function CoverLeft(shares As Dictionary(Of String, Double), regulation As Double) As Double
+        Return minimalUnit(shares, left, regulation)
+    End Function
 
-    Public ReadOnly Property CoverRight(Optional regulation As Double = 1) As Double
-        Get
-            Return minimalUnit(right, regulation)
-        End Get
-    End Property
+    Public Function CoverRight(shares As Dictionary(Of String, Double), regulation As Double) As Double
+        Return minimalUnit(shares, right, regulation)
+    End Function
 
     Public Property ID As String Implements IKeyedEntity(Of String).Key
 
@@ -60,19 +56,21 @@ Public Class Channel : Implements INamedValue
     ''' <param name="factors"></param>
     ''' <param name="regulation"></param>
     ''' <returns></returns>
-    Private Shared Function minimalUnit(factors As IEnumerable(Of Variable), regulation As Double) As Double
+    Private Shared Function minimalUnit(parallel As Dictionary(Of String, Double), factors As IEnumerable(Of Variable), regulation As Double) As Double
         Return factors _
             .Select(Function(v)
                         Dim r = regulation * v.Coefficient
+                        Dim shares# = parallel(v.Mass.ID)
+                        Dim massUnit = v.Mass.Value / shares
 
-                        If r > v.Mass.Value Then
+                        If r > massUnit Then
                             ' 消耗的已经超过了当前的容量
                             ' 则最小的反应单位是当前的物质容量
 
                             ' 如果某一个物质的容量是零，则表示没有反应物可以被利用了
                             ' 则计算出来的最小反应单位是零
                             ' 即此反应过程不可能会发生
-                            Return v.Mass.Value / v.Coefficient
+                            Return massUnit / v.Coefficient
                         Else ' 能够正常的以当前的反应单位进行
                             Return regulation
                         End If
