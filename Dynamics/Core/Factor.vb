@@ -29,7 +29,11 @@ Public Class Variable
     End Sub
 
     Public Overrides Function ToString() As String
-        Return Mass.ToString
+        If Not IsTemplate Then
+            Return Mass.ToString
+        Else
+            Return $"[{Mass}]"
+        End If
     End Function
 
 End Class
@@ -45,4 +49,8 @@ Public Class Factor : Inherits Value(Of Double)
     Public Overrides Function ToString() As String
         Return $"{ID} ({Value} unit)"
     End Function
+
+    Public Overloads Shared Widening Operator CType(name As String) As Factor
+        Return New Factor With {.ID = name}
+    End Operator
 End Class
