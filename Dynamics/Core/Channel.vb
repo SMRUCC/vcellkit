@@ -1,11 +1,10 @@
 ﻿Imports Microsoft.VisualBasic.ComponentModel.Collection.Generic
 Imports Microsoft.VisualBasic.ComponentModel.DataSourceModel.Repository
-Imports Microsoft.VisualBasic.Language
 
 ''' <summary>
 ''' 反应过程通道
 ''' </summary>
-Public Class Channel
+Public Class Channel : Implements INamedValue
 
     Dim left As Variable()
     Dim right As Variable()
@@ -36,6 +35,8 @@ Public Class Channel
             Return minimalUnit(right, regulation)
         End Get
     End Property
+
+    Public Property ID As String Implements IKeyedEntity(Of String).Key
 
     Sub New(left As IEnumerable(Of Variable), right As IEnumerable(Of Variable))
         Me.left = left.ToArray

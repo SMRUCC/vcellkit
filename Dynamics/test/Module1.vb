@@ -14,6 +14,8 @@ Module Module1
 
         Dim snapshots As New List(Of DataSet)
 
+        Call envir.Initialize()
+
         For i As Integer = 0 To 10000
             envir.ContainerIterator()
             snapshots += New DataSet With {
