@@ -33,8 +33,9 @@ Public Class Vessel
 
     Private Function iterateFlux(reaction As Channel) As NamedValue(Of Double)
         Dim regulate#
+        Dim flow As Directions = reaction.Direction
 
-        Select Case reaction.Direction
+        Select Case flow
             Case Directions.LeftToRight
                 ' 消耗左边，产生右边
                 regulate = reaction.Forward.Coefficient
@@ -47,7 +48,7 @@ Public Class Vessel
                 If regulate > 0 Then
                     ' 当前的过程是可以进行的
                     ' 则进行物质的转义的计算
-                    Call reaction.Transition(regulate, Directions.LeftToRight)
+                    Call reaction.Transition(regulate, flow)
                 End If
             Case Directions.RightToLeft
                 regulate = reaction.Reverse.Coefficient
@@ -56,13 +57,13 @@ Public Class Vessel
                     regulate = reaction.CoverRight(regulate)
                 End If
                 If regulate > 0 Then
-                    Call reaction.Transition(regulate, Directions.RightToLeft)
+                    Call reaction.Transition(regulate, flow)
                 End If
             Case Else
                 ' no reaction will be happends
                 regulate = 0
         End Select
 
-        Return New NamedValue(Of Double)(reaction.ID, regulate)
+        Return New NamedValue(Of Double)(reaction.ID, flow * regulate)
     End Function
 End Class

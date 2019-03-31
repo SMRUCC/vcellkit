@@ -68,7 +68,7 @@ Module Module1
 
         Yield New Channel(pop({"B"}), pop({"A", "D"})) With {
             .ID = "BAD",
-            .Forward = New Regulation With {.Activation = pop({"C", "G"}).ToArray},
+            .Forward = New Regulation With {.Activation = pop({"C", "G", "B"}).ToArray},
             .Reverse = New Regulation With {.Activation = pop({"E"}).ToArray}
         }
 
@@ -88,6 +88,12 @@ Module Module1
             .Reverse = New Regulation With {.Activation = pop({"I", "D"}).ToArray}
         }
 
+        Yield New Channel(pop({"D", "F"}), pop({"H"})) With {
+            .ID = "DFH",
+            .Forward = New Regulation With {.Activation = pop({"B"}).ToArray},
+            .Reverse = New Regulation With {.Activation = pop({"I", "D"}).ToArray}
+        }
+
         Yield New Channel(pop({"I"}), pop({"G"})) With {
             .ID = "IG",
            .Forward = New Regulation With {.Activation = pop({"B"}).ToArray},
@@ -96,7 +102,7 @@ Module Module1
 
         Yield New Channel(pop({"H"}), pop({"I", "D"})) With {
             .ID = "HID",
-           .Forward = New Regulation With {.Activation = pop({"B"}).ToArray},
+           .Forward = New Regulation With {.Activation = pop({"B", "H"}).ToArray},
            .Reverse = New Regulation With {.Activation = pop({"A"}).ToArray}
        }
     End Function
