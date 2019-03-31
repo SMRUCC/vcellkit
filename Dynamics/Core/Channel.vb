@@ -12,7 +12,7 @@ Public Class Channel : Implements INamedValue
     Public Property Forward As Regulation
     Public Property Reverse As Regulation
 
-    Public ReadOnly Property Direction As Directions
+    Public Overloads ReadOnly Property Direction As Directions
         Get
             If Forward > Reverse Then
                 Return Directions.LeftToRight
@@ -39,10 +39,19 @@ Public Class Channel : Implements INamedValue
         Me.right = right.ToArray
     End Sub
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="regulation"></param>
+    ''' <param name="dir"></param>
+    ''' <remarks>
+    ''' 模板物质的容量是不会发生变化的
+    ''' </remarks>
     Public Sub Transition(regulation As Double, dir As Directions)
         regulation = regulation * dir
 
-        For Each mass In left
+        ' 一般左边为模板
+        For Each mass In left.Where(Function(m) Not m.IsTemplate)
             mass.Mass.Value -= regulation * mass.Coefficient
         Next
         For Each mass In right

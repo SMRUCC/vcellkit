@@ -8,7 +8,13 @@ Public Module Loader
 
     <Extension>
     Public Function CreateEnvironment(cell As CellularModule) As Vessel
+        Dim channels As New List(Of Channel)
+        Dim massTable As New Dictionary(Of String, Factor)
 
+        ' 先构建转录过程
+        For Each cd As CentralDogma In cell.Genotype.centralDogmas
+
+        Next
     End Function
 
     ''' <summary>
