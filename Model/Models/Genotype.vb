@@ -40,6 +40,8 @@
 
 #End Region
 
+Imports System.Reflection
+Imports Microsoft.VisualBasic.ComponentModel.DataSourceModel
 ''' <summary>
 ''' 目标细胞模型的基因组模型
 ''' </summary>
@@ -67,7 +69,7 @@ Public Structure Genotype
     End Function
 End Structure
 
-Public Class RNAComposition
+Public Class RNAComposition : Implements IEnumerable(Of NamedValue(Of Double))
 
     Public Property geneID As String
     ''' <summary>
@@ -91,9 +93,23 @@ Public Class RNAComposition
     ''' <returns></returns>
     Public Property C As Integer
 
+    Public Overrides Function ToString() As String
+        Return geneID
+    End Function
+
+    Public Iterator Function GetEnumerator() As IEnumerator(Of NamedValue(Of Double)) Implements IEnumerable(Of NamedValue(Of Double)).GetEnumerator
+        Yield New NamedValue(Of Double)("A", A)
+        Yield New NamedValue(Of Double)("U", U)
+        Yield New NamedValue(Of Double)("G", G)
+        Yield New NamedValue(Of Double)("C", C)
+    End Function
+
+    Private Iterator Function IEnumerable_GetEnumerator() As IEnumerator Implements IEnumerable.GetEnumerator
+        Yield GetEnumerator()
+    End Function
 End Class
 
-Public Class ProteinComposition
+Public Class ProteinComposition : Implements IEnumerable(Of NamedValue(Of Double))
 
     Public Property proteinID As String
 
@@ -208,4 +224,22 @@ Public Class ProteinComposition
     ''' <returns></returns>
     Public Property O As Integer
 
+    Shared ReadOnly aa As PropertyInfo()
+
+    Shared Sub New()
+        aa = DataFramework.Schema(Of ProteinComposition)(PropertyAccess.Readable, True, True) _
+            .Values _
+            .Where(Function(p) p.Name.Length = 1) _
+            .ToArray
+    End Sub
+
+    Public Iterator Function GetEnumerator() As IEnumerator(Of NamedValue(Of Double)) Implements IEnumerable(Of NamedValue(Of Double)).GetEnumerator
+        For Each aminoAcid As PropertyInfo In aa
+            Yield New NamedValue(Of Double)(aminoAcid.Name, aminoAcid.GetValue(Me))
+        Next
+    End Function
+
+    Private Iterator Function IEnumerable_GetEnumerator() As IEnumerator Implements IEnumerable.GetEnumerator
+        Yield GetEnumerator()
+    End Function
 End Class
