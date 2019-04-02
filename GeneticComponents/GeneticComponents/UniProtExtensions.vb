@@ -30,7 +30,8 @@ Public Module UniProtExtensions
                     .Select(Function(g) g.id) _
                     .ToArray,
                 .Xref = .ID,
-                .Accession = ntAccess?.value
+                .Accession = ntAccess?.value,
+                .Nt = ""
             }
         Next
     End Function
