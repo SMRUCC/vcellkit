@@ -75,7 +75,7 @@ Public Class Loader
         Return matrix(geneID) _
             .Where(Function(i) i.Value > 0) _
             .Select(Function(base)
-                        Return massTable.variable(base.Name, base.Value)
+                        Return massTable.variable(define.NucleicAcid(base.Name), base.Value)
                     End Function) _
             .AsList + massTable.template(geneID)
     End Function
@@ -84,7 +84,7 @@ Public Class Loader
         Return matrix(mRNA) _
             .Where(Function(i) i.Value > 0) _
             .Select(Function(aa)
-                        Return massTable.variable(aa.Name, aa.Value)
+                        Return massTable.variable(define.AminoAcid(aa.Name), aa.Value)
                     End Function) _
             .AsList + massTable.template(mRNA)
     End Function
