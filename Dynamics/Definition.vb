@@ -38,6 +38,19 @@ Public Class NucleicAcid
     ''' <returns></returns>
     Public Property C As String
 
+    Default Public ReadOnly Property Base(compound As String) As String
+        Get
+            Select Case compound
+                Case "A" : Return A
+                Case "U", "T" : Return U
+                Case "G" : Return G
+                Case "C" : Return C
+                Case Else
+                    Throw New NotImplementedException(compound)
+            End Select
+        End Get
+    End Property
+
 End Class
 
 Public Class AminoAcid

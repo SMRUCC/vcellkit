@@ -74,14 +74,18 @@ Public Class Loader
     Private Function transcriptionTemplate(geneID$, matrix As Dictionary(Of String, RNAComposition)) As Variable()
         Return matrix(geneID) _
             .Where(Function(i) i.Value > 0) _
-            .Select(Function(base) massTable.variable(base.Name, base.Value)) _
+            .Select(Function(base)
+                        Return massTable.variable(base.Name, base.Value)
+                    End Function) _
             .AsList + massTable.template(geneID)
     End Function
 
     Private Function translationTemplate(mRNA$, matrix As Dictionary(Of String, ProteinComposition)) As Variable()
         Return matrix(mRNA) _
             .Where(Function(i) i.Value > 0) _
-            .Select(Function(aa) massTable.variable(aa.Name, aa.Value)) _
+            .Select(Function(aa)
+                        Return massTable.variable(aa.Name, aa.Value)
+                    End Function) _
             .AsList + massTable.template(mRNA)
     End Function
 End Class
