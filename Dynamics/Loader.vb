@@ -1,9 +1,8 @@
 ﻿Imports System.Runtime.CompilerServices
+Imports Microsoft.VisualBasic.ComponentModel.DataSourceModel.Repository
 Imports Microsoft.VisualBasic.ComponentModel.TagData
 Imports Microsoft.VisualBasic.Language
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model
-Imports Microsoft.VisualBasic.ComponentModel.DataSourceModel.Repository
-Imports SMRUCC.genomics.GCModeller.ModellingEngine.Dynamics
 
 ''' <summary>
 ''' Module loader
@@ -11,6 +10,7 @@ Imports SMRUCC.genomics.GCModeller.ModellingEngine.Dynamics
 Public Class Loader
 
     Dim define As Definition
+    Dim massTable As New MassTable
 
     Sub New(define As Definition)
         Me.define = define
@@ -18,29 +18,28 @@ Public Class Loader
 
     Public Function CreateEnvironment(cell As CellularModule) As Vessel
         Dim channels As New List(Of Channel)
-        Dim massTable As New Dictionary(Of String, Factor)
         Dim rnaMatrix = cell.Genotype.RNAMatrix.ToDictionary(Function(r) r.geneID)
         Dim proteinMatrix = cell.Genotype.ProteinMatrix.ToDictionary(Function(r) r.proteinID)
 
         ' 先构建一般性的中心法则过程
         For Each cd As CentralDogma In cell.Genotype.centralDogmas
-            Call massTable.Add(cd.geneID, cd.geneID)
-            Call massTable.Add(cd.RNA.Name, cd.RNA.Name)
-            Call massTable.Add(cd.polypeptide, cd.polypeptide)
+            Call massTable.AddNew(cd.geneID)
+            Call massTable.AddNew(cd.RNA.Name)
+            Call massTable.AddNew(cd.polypeptide)
 
-            channels += New Channel(massTable.transcriptionTemplate(cd.geneID, rnaMatrix), {massTable.variable(cd.RNA.Name)})
-            channels += New Channel(massTable.translationTemplate(cd.RNA.Name, proteinMatrix), {massTable.variable(cd.polypeptide)})
+            channels += New Channel(transcriptionTemplate(cd.geneID, rnaMatrix), {massTable.variable(cd.RNA.Name)})
+            channels += New Channel(translationTemplate(cd.RNA.Name, proteinMatrix), {massTable.variable(cd.polypeptide)})
         Next
 
         ' 构建酶成熟的过程
         For Each complex As Protein In cell.Phenotype.proteins
             For Each compound In complex.compounds
-                If Not massTable.ContainsKey(compound) Then
-                    massTable(compound) = compound
+                If Not massTable.Exists(compound) Then
+                    Call massTable.AddNew(compound)
                 End If
             Next
             For Each peptide In complex.polypeptides
-                If Not massTable.ContainsKey(peptide) Then
+                If Not massTable.Exists(peptide) Then
                     Throw New MissingMemberException(peptide)
                 End If
             Next
@@ -51,19 +50,19 @@ Public Class Loader
         ' 构建代谢网络
         For Each reaction As Reaction In cell.Phenotype.fluxes
             For Each compound In reaction.AllCompounds
-                If Not massTable.ContainsKey(compound) Then
-                    massTable(compound) = compound
+                If Not massTable.Exists(compound) Then
+                    Call massTable.AddNew(compound)
                 End If
             Next
 
-            Dim left = reaction.substrates.variables(massTable)
-            Dim right = reaction.products.variables(massTable)
+            Dim left = massTable.variables(reaction.substrates)
+            Dim right = massTable.variables(reaction.products)
 
             channels += New Channel(left, right) With {
                 .bounds = reaction.bounds,
                 .ID = reaction.ID,
                 .Forward = New Regulation With {
-                    .Activation = reaction.enzyme.variables(massTable, 1)
+                    .Activation = massTable.variables(reaction.enzyme, 1)
                 },
                 .Reverse = New Regulation With {.baseline = 10}
             }
@@ -71,20 +70,18 @@ Public Class Loader
 
         Return New Vessel With {
             .Channels = channels,
-            .Mass = massTable.Values.ToArray
+            .Mass = massTable.GetAll.Values.ToArray
         }
     End Function
 
-    <Extension>
-    Private Function transcriptionTemplate(massTable As Dictionary(Of String, Factor), geneID$, matrix As Dictionary(Of String, RNAComposition), define As Definition) As Variable()
+    Private Function transcriptionTemplate(geneID$, matrix As Dictionary(Of String, RNAComposition)) As Variable()
         Return matrix(geneID) _
             .Where(Function(i) i.Value > 0) _
             .Select(Function(base) massTable.variable(base.Name, base.Value)) _
             .AsList + massTable.template(geneID)
     End Function
 
-    <Extension>
-    Private Function translationTemplate(massTable As Dictionary(Of String, Factor), mRNA$, matrix As Dictionary(Of String, ProteinComposition)) As Variable()
+    Private Function translationTemplate(mRNA$, matrix As Dictionary(Of String, ProteinComposition)) As Variable()
         Return matrix(mRNA) _
             .Where(Function(i) i.Value > 0) _
             .Select(Function(aa) massTable.variable(aa.Name, aa.Value)) _
@@ -94,7 +91,7 @@ End Class
 
 Public Class MassTable : Implements IRepository(Of String, Factor)
 
-    Dim massTable As Dictionary(Of String, Factor)
+    Dim massTable As New Dictionary(Of String, Factor)
 
     Public Sub Delete(key As String) Implements IRepositoryWrite(Of String, Factor).Delete
         If massTable.ContainsKey(key) Then
