@@ -1,8 +1,12 @@
-﻿Imports Microsoft.VisualBasic.MachineLearning.Darwinism.GAF
+﻿Imports System.Runtime.CompilerServices
+Imports Microsoft.VisualBasic.ComponentModel.Collection
+Imports Microsoft.VisualBasic.Linq
+Imports Microsoft.VisualBasic.MachineLearning.Darwinism.GAF
 Imports Microsoft.VisualBasic.MachineLearning.Darwinism.GAF.Helper
 Imports Microsoft.VisualBasic.MachineLearning.Darwinism.Models
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Dynamics
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model
+Imports TFReg = SMRUCC.genomics.GCModeller.ModellingEngine.Model.Regulation
 
 ''' <summary>
 ''' 通过删减基因的方法将基因组最小化
@@ -21,7 +25,8 @@ Public Module DeletionToMinimum
     ''' </returns>
     Public Function DoDeletion(model As CellularModule, define As Definition, eval As Func(Of Vessel, Double), Optional popSize% = 500) As String()
         Dim envir As Vessel = New Loader(define).CreateEnvironment(model)
-        Dim population As Population(Of Genome) = New Genome().InitialPopulation(5000)
+        Dim byteMap As New Encoder(model)
+        Dim population As Population(Of Genome) = New Genome(byteMap).InitialPopulation(5000)
         Dim ga As New GeneticAlgorithm(Of Genome)(population, New Fitness(eval))
         Dim engine As New EnvironmentDriver(Of Genome)(ga) With {
             .Iterations = 10000,
@@ -31,11 +36,37 @@ Public Module DeletionToMinimum
         Call engine.AttachReporter(Sub(i, e, g) EnvironmentDriver(Of Genome).CreateReport(i, e, g).ToString.__DEBUG_ECHO)
         Call engine.Train()
 
-        Dim solution = ga.Best.chromosome
+        Dim solutionBytes = ga.Best.chromosome
+        Dim components = byteMap.Decode(solutionBytes).ToArray
+
+        Return components
     End Function
 
-
 End Module
+
+Public Class Encoder
+
+    Friend ReadOnly index As New Index(Of String)
+
+    Sub New(model As CellularModule)
+        For Each gene As CentralDogma In model.Genotype
+            Call index.Add(gene.geneID)
+        Next
+        For Each reg As TFReg In model.Regulations.Where(Function(r) r.type = Processes.Transcription)
+            Call index.Add(reg.process)
+        Next
+    End Sub
+
+    <MethodImpl(MethodImplOptions.AggressiveInlining)>
+    Public Function Decode(bytes As Integer()) As IEnumerable(Of String)
+        Return bytes _
+            .SeqIterator _
+            .Where(Function(b) b.value > 0) _
+            .Select(Function(i)
+                        Return index(index:=i)
+                    End Function)
+    End Function
+End Class
 
 ''' <summary>
 ''' 基因组是由遗传元件所构成的
@@ -48,6 +79,23 @@ Public Class Genome : Implements Chromosome(Of Genome)
     Friend chromosome As Integer()
 
     Shared ReadOnly random As New Random()
+
+    Sub New()
+    End Sub
+
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="encoder"></param>
+    ''' <remarks>
+    ''' 在初始状态下所有的遗传元件都是存在的，所以初始序列全部都是1
+    ''' </remarks>
+    Sub New(encoder As Encoder)
+        chromosome = encoder _
+            .index _
+            .Select(Function([byte]) 1) _
+            .ToArray
+    End Sub
 
     Private Function Clone() As Genome
         Return New Genome With {
