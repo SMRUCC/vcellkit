@@ -12,16 +12,17 @@ Public Module DeletionToMinimum
     ''' <summary>
     ''' 
     ''' </summary>
-    ''' <param name="model"></param>
+    ''' <param name="model">这个数据模型之中仅包含有生物学功能的描述，并没有任何序列信息</param>
     ''' <param name="define"></param>
     ''' <param name="popSize">进化的种群大小</param>
-    ''' <param name="fitness">计算突变体的对环境的适应度</param>
-    ''' <returns></returns>
-    Public Function DoDeletion(model As CellularModule, define As Definition, fitness As Func(Of Vessel, Double), Optional popSize% = 500) As Integer()
+    ''' <param name="eval">计算突变体的对环境的适应度</param>
+    ''' <returns>
+    ''' 这个函数返回的是目标可能的最优解下的所有的剩余的遗传元件的编号列表，然后下游程序可以根据这个编号列表来进行全基因组序列的装配
+    ''' </returns>
+    Public Function DoDeletion(model As CellularModule, define As Definition, eval As Func(Of Vessel, Double), Optional popSize% = 500) As String()
         Dim envir As Vessel = New Loader(define).CreateEnvironment(model)
         Dim population As Population(Of Genome) = New Genome().InitialPopulation(5000)
-        Dim fitness As Fitness(Of Genome) = New Fitness()
-        Dim ga As New GeneticAlgorithm(Of Genome)(population, fitness)
+        Dim ga As New GeneticAlgorithm(Of Genome)(population, New Fitness(eval))
         Dim engine As New EnvironmentDriver(Of Genome)(ga) With {
             .Iterations = 10000,
             .Threshold = 0.005
@@ -30,7 +31,7 @@ Public Module DeletionToMinimum
         Call engine.AttachReporter(Sub(i, e, g) EnvironmentDriver(Of Genome).CreateReport(i, e, g).ToString.__DEBUG_ECHO)
         Call engine.Train()
 
-        Return ga.Best
+        Dim solution = ga.Best.chromosome
     End Function
 
 
@@ -44,7 +45,7 @@ Public Class Genome : Implements Chromosome(Of Genome)
     ''' <summary>
     ''' 染色体上面的基因以及调控位点的构成，1表示存在，0表示缺失
     ''' </summary>
-    Dim chromosome As Integer()
+    Friend chromosome As Integer()
 
     Shared ReadOnly random As New Random()
 
@@ -78,6 +79,10 @@ Public Class Fitness : Implements Fitness(Of Genome)
             Return False
         End Get
     End Property
+
+    Sub New(target As Func(Of Vessel, Double))
+
+    End Sub
 
     Public Function Calculate(chromosome As Genome) As Double Implements Fitness(Of Genome).Calculate
 
