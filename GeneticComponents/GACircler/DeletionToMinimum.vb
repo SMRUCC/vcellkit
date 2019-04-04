@@ -27,7 +27,7 @@ Public Module DeletionToMinimum
         Dim envir As Vessel = New Loader(define).CreateEnvironment(model)
         Dim byteMap As New Encoder(model)
         Dim population As Population(Of Genome) = New Genome(byteMap, envir).InitialPopulation(5000)
-        Dim ga As New GeneticAlgorithm(Of Genome)(population, New Fitness(eval))
+        Dim ga As New GeneticAlgorithm(Of Genome)(population, New Fitness(eval, define.status))
         Dim engine As New EnvironmentDriver(Of Genome)(ga) With {
             .Iterations = 10000,
             .Threshold = 0.005
@@ -58,7 +58,7 @@ Public Class Encoder
     End Sub
 
     ''' <summary>
-    ''' 
+    ''' 获取得到目标解所对应的激活的基因组元件或者被删除的基因组元件的编号列表
     ''' </summary>
     ''' <param name="bytes"></param>
     ''' <param name="inactive">是否获取得到未激活的对象编号？</param>
@@ -177,9 +177,11 @@ Public Class Fitness : Implements Fitness(Of Genome)
     End Property
 
     Dim evaluation As Func(Of Vessel, Double)
+    Dim reset As Dictionary(Of String, Double)
 
-    Sub New(target As Func(Of Vessel, Double))
+    Sub New(target As Func(Of Vessel, Double), init As Dictionary(Of String, Double))
         evaluation = target
+        reset = init
     End Sub
 
     ''' <summary>
@@ -189,6 +191,9 @@ Public Class Fitness : Implements Fitness(Of Genome)
     ''' <param name="chromosome"></param>
     ''' <returns></returns>
     Public Function Calculate(chromosome As Genome) As Double Implements Fitness(Of Genome).Calculate
+        Dim size = Math.Log(chromosome.Size)
+        Dim test = chromosome.RunEvaluation(evaluation, reset)
 
+        Return (size + test) / 2
     End Function
 End Class
