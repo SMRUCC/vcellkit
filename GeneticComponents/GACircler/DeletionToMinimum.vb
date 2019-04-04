@@ -26,7 +26,7 @@ Public Module DeletionToMinimum
     Public Function DoDeletion(model As CellularModule, define As Definition, eval As Func(Of Vessel, Double), Optional popSize% = 500) As String()
         Dim envir As Vessel = New Loader(define).CreateEnvironment(model)
         Dim byteMap As New Encoder(model)
-        Dim population As Population(Of Genome) = New Genome(byteMap).InitialPopulation(5000)
+        Dim population As Population(Of Genome) = New Genome(byteMap, envir).InitialPopulation(5000)
         Dim ga As New GeneticAlgorithm(Of Genome)(population, New Fitness(eval))
         Dim engine As New EnvironmentDriver(Of Genome)(ga) With {
             .Iterations = 10000,
@@ -37,7 +37,7 @@ Public Module DeletionToMinimum
         Call engine.Train()
 
         Dim solutionBytes = ga.Best.chromosome
-        Dim components = byteMap.Decode(solutionBytes).ToArray
+        Dim components = byteMap.Decode(solutionBytes, inactive:=False).ToArray
 
         Return components
     End Function
@@ -57,11 +57,23 @@ Public Class Encoder
         Next
     End Sub
 
+    ''' <summary>
+    ''' 
+    ''' </summary>
+    ''' <param name="bytes"></param>
+    ''' <param name="inactive">是否获取得到未激活的对象编号？</param>
+    ''' <returns></returns>
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    Public Function Decode(bytes As Integer()) As IEnumerable(Of String)
+    Public Function Decode(bytes As Integer(), inactive As Boolean) As IEnumerable(Of String)
         Return bytes _
             .SeqIterator _
-            .Where(Function(b) b.value > 0) _
+            .Where(Function(b)
+                       If inactive Then
+                           Return b.value = 0
+                       Else
+                           Return b.value > 0
+                       End If
+                   End Function) _
             .Select(Function(i)
                         Return index(index:=i)
                     End Function)
@@ -78,6 +90,7 @@ Public Class Genome : Implements Chromosome(Of Genome)
     ''' </summary>
     Friend chromosome As Integer()
     Friend test As Vessel
+    Friend byteMap As Encoder
 
     Shared ReadOnly random As New Random()
 
@@ -107,7 +120,30 @@ Public Class Genome : Implements Chromosome(Of Genome)
             .Select(Function([byte]) 1) _
             .ToArray
         test = model
+        byteMap = encoder
     End Sub
+
+    Public Function RunEvaluation(fitness As Func(Of Vessel, Double), init As Dictionary(Of String, Double)) As Double
+        ' 首先会需要根据基因组内容进行模板的激活或者缺失
+        Dim components = byteMap.Decode(chromosome, inactive:=False).Indexing
+        Dim deletes = byteMap.Decode(chromosome, inactive:=True).Indexing
+
+        For Each mass As Factor In test.Mass
+            If mass.ID Like components Then
+                ' 模板只有一个
+                mass.Value = 1
+            ElseIf mass.ID Like deletes Then
+                ' 当前的这个模板应该是被缺失掉的
+                mass.Value = 0
+            Else
+                ' 对于其他化合物分子，则需要回复到初始值
+                mass.Value = init(mass.ID)
+            End If
+        Next
+
+        ' 对当前得到的这个基因组模型计算模拟计算以及评估
+        Return fitness(test)
+    End Function
 
     Private Function Clone() As Genome
         Return New Genome With {
