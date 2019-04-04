@@ -147,7 +147,9 @@ Public Class Genome : Implements Chromosome(Of Genome)
 
     Private Function Clone() As Genome
         Return New Genome With {
-            .chromosome = chromosome.ToArray
+            .chromosome = chromosome.ToArray,
+            .test = test.Clone,
+            .byteMap = byteMap
         }
     End Function
 
