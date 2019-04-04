@@ -77,8 +77,19 @@ Public Class Genome : Implements Chromosome(Of Genome)
     ''' 染色体上面的基因以及调控位点的构成，1表示存在，0表示缺失
     ''' </summary>
     Friend chromosome As Integer()
+    Friend test As Vessel
 
     Shared ReadOnly random As New Random()
+
+    ''' <summary>
+    ''' 获取当前的基因组的大小
+    ''' </summary>
+    ''' <returns></returns>
+    Public ReadOnly Property Size As Integer
+        Get
+            Return chromosome.Where(Function(b) b > 0).Sum
+        End Get
+    End Property
 
     Sub New()
     End Sub
@@ -90,11 +101,12 @@ Public Class Genome : Implements Chromosome(Of Genome)
     ''' <remarks>
     ''' 在初始状态下所有的遗传元件都是存在的，所以初始序列全部都是1
     ''' </remarks>
-    Sub New(encoder As Encoder)
+    Sub New(encoder As Encoder, model As Vessel)
         chromosome = encoder _
             .index _
             .Select(Function([byte]) 1) _
             .ToArray
+        test = model
     End Sub
 
     Private Function Clone() As Genome
@@ -128,10 +140,18 @@ Public Class Fitness : Implements Fitness(Of Genome)
         End Get
     End Property
 
-    Sub New(target As Func(Of Vessel, Double))
+    Dim evaluation As Func(Of Vessel, Double)
 
+    Sub New(target As Func(Of Vessel, Double))
+        evaluation = target
     End Sub
 
+    ''' <summary>
+    ''' 1. 基因组应该尽量小
+    ''' 2. 目标函数应该尽量小
+    ''' </summary>
+    ''' <param name="chromosome"></param>
+    ''' <returns></returns>
     Public Function Calculate(chromosome As Genome) As Double Implements Fitness(Of Genome).Calculate
 
     End Function
