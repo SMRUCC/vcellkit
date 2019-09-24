@@ -39,33 +39,47 @@
 
 #End Region
 
+Imports Microsoft.VisualBasic.Math.LinearAlgebra
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Dynamics.Core
 
-Namespace Core
+''' <summary>
+''' 细胞状态定义
+''' </summary>
+''' <remarks>
+''' 在这里应该是通过各种代谢物分子之间的浓度相对百分比来定义诸如死亡或者细胞分裂之类的状态？
+''' </remarks>
+Public Class Status
 
     ''' <summary>
-    ''' 细胞状态定义
+    ''' 状态名称
     ''' </summary>
-    ''' <remarks>
-    ''' 在这里应该是通过各种代谢物分子之间的浓度相对百分比来定义诸如死亡或者细胞分裂之类的状态？
-    ''' </remarks>
-    Public Class Status
+    ''' <returns></returns>
+    Public Property name As String
+    ''' <summary>
+    ''' 当虚拟细胞反应容器<see cref="Vessel"/>中的<see cref="Vessel.Mass"/>浓度
+    ''' 百分比接近于这个向量的百分比的时候就认为<see cref="name"/>状态或者细胞活动事件发生了
+    ''' </summary>
+    ''' <returns></returns>
+    Public Property definition As Dictionary(Of String, Double)
 
-        ''' <summary>
-        ''' 状态名称
-        ''' </summary>
-        ''' <returns></returns>
-        Public Property name As String
-        ''' <summary>
-        ''' 当虚拟细胞反应容器<see cref="Vessel"/>中的<see cref="Vessel.Mass"/>浓度
-        ''' 百分比接近于这个向量的百分比的时候就认为<see cref="name"/>状态或者细胞活动事件发生了
-        ''' </summary>
-        ''' <returns></returns>
-        Public Property definition As Dictionary(Of String, Double)
+    ReadOnly masslist$()
+    ReadOnly status As Vector
 
-        Public Function IsCurrentStatus(cell As Vessel, cutoff#) As Boolean
-            Dim current As Double() = cell.Mass.Take
-        End Function
+    Sub New(name$, status As Dictionary(Of String, Double))
+        Me.masslist = status.Keys.ToArray
+        Me.status = status.Takes(masslist)
+        Me.name = name
+    End Sub
 
-    End Class
-End Namespace
+    Public Function IsCurrentStatus(engine As Engine, cutoff#) As Boolean
+        Dim current As Vector = engine.GetMass(masslist).Select(Function(mass) mass.Value).AsVector
+        Dim diff As Vector
+
+        current = current / current.Max
+        diff = current - status
+
+        ' 通过当前的代谢物物质间的百分比是否和定义的状态相似
+        ' 来判断特定的事件是否发生
+        Return diff.Average <= cutoff
+    End Function
+End Class
