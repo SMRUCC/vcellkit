@@ -99,51 +99,60 @@ Module Module1
                   End Function
 
         Yield New Channel(pop({"A", "B"}), pop({"C", "D"})) With {
+            .bounds = {1, 5},
             .ID = "ABCD",
             .Forward = New Controls,
             .Reverse = New Controls With {.Activation = pop({"B", "D"}).ToArray}}
 
         Yield New Channel(pop({"E", "F"}), pop({"A", "G"})) With {
+            .bounds = {1, 5},
             .ID = "EFAG",
             .Forward = New Controls,
             .Reverse = New Controls With {.Activation = pop({"B"}).ToArray}
         }
 
         Yield New Channel(pop({"B"}), pop({"A", "D"})) With {
+            .bounds = {1, 5},
             .ID = "BAD",
             .Forward = New Controls With {.Activation = pop({"C", "G", "B"}).ToArray},
             .Reverse = New Controls With {.Activation = pop({"E"}).ToArray}
         }
 
         Yield New Channel(pop({"G"}), pop({"E"})) With {
+            .bounds = {1, 5},
             .ID = "GE",
             .Forward = New Controls With {.Activation = pop({"F"}).ToArray}
         }
         Yield New Channel(pop({"E"}), pop({"G", "D", "C"})) With {
+            .bounds = {1, 5},
             .ID = "EGDC",
             .Forward = New Controls With {.Activation = pop({"E"}).ToArray},
             .Reverse = New Controls With {.Activation = pop({"C", "D"}).ToArray}
         }
 
         Yield New Channel(pop({"B", "F"}), pop({"H"})) With {
+            .bounds = {1, 5},
             .ID = "BFH",
             .Forward = New Controls With {.Activation = pop({"B"}).ToArray},
             .Reverse = New Controls With {.Activation = pop({"I", "D"}).ToArray}
         }
 
         Yield New Channel(pop({"D", "F"}), pop({"H"})) With {
+            .bounds = {1, 5},
             .ID = "DFH",
             .Forward = New Controls With {.Activation = pop({"B"}).ToArray},
             .Reverse = New Controls With {.Activation = pop({"I", "D"}).ToArray}
         }
 
         Yield New Channel(pop({"I"}), pop({"G"})) With {
+            .bounds = {1, 5},
             .ID = "IG",
            .Forward = New Controls With {.Activation = pop({"B"}).ToArray},
            .Reverse = New Controls With {.Activation = pop({"G", "D"}).ToArray}
        }
 
         Yield New Channel(pop({"H"}), pop({"I", "D"})) With {
+            .bounds = {1, 5},
             .ID = "HID",
            .Forward = New Controls With {.Activation = pop({"B", "H"}).ToArray},
            .Reverse = New Controls With {.Activation = pop({"A"}).ToArray}
