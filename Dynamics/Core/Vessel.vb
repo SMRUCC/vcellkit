@@ -121,7 +121,7 @@ Namespace Core
 
         Private Function iterateFlux(reaction As Channel) As NamedValue(Of Double)
             Dim regulate#
-            Dim flow As Directions = reaction.Direction
+            Dim flow As Directions = reaction.direct
 
             Select Case flow
                 Case Directions.forward
