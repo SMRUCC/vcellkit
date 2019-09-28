@@ -10,7 +10,7 @@ Public Module Visualizer
         Dim g As New NetworkGraph
         Dim node As Node
 
-        For Each mass As Node In cell.Mass _
+        For Each mass As Node In cell.MassEnvironment _
             .Select(Function(m)
                         Return New Node With {
                             .label = m.ID,

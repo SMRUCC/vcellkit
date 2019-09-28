@@ -53,7 +53,7 @@ Module Module1
     Sub Main()
         Dim massTable = mass.ToDictionary(Function(m) m.ID)
         Dim envir As New Vessel With {
-            .Mass = massTable.Values.ToArray,
+            .MassEnvironment = massTable.Values.ToArray,
             .Channels = reactions(massTable).ToArray
         }
 
@@ -63,7 +63,10 @@ Module Module1
         Call envir.Initialize()
 
         For i As Integer = 0 To 10000
-            flux += New DataSet With {.ID = i, .Properties = envir.ContainerIterator().ToDictionary.FlatTable}
+            flux += New DataSet With {
+                .ID = i,
+                .Properties = envir.ContainerIterator().ToDictionary.FlatTable
+            }
             snapshots += New DataSet With {
                 .ID = i,
                 .Properties = massTable.ToDictionary(Function(m) m.Key, Function(m) m.Value.Value)

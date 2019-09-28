@@ -72,7 +72,7 @@ Namespace Core
         ''' 当前的这个微环境之中的所有的物质列表，会包括代谢物，氨基酸，RNA等物质信息
         ''' </summary>
         ''' <returns></returns>
-        Public Property Mass As Factor()
+        Public Property MassEnvironment As Factor()
 
         ''' <summary>
         ''' 因为在现实中这些反应过程是同时发生的，所以在这里使用这个共享因子来模拟并行事件
@@ -97,7 +97,7 @@ Namespace Core
                             End If
                         End Function) _
                 .IteratesALL _
-                .GroupBy(Function(x) x.Mass.ID) _
+                .GroupBy(Function(var) var.Mass.ID) _
                 .ToDictionary(Function(m) m.Key,
                               Function(m)
                                   Return CDbl(m.Count)
@@ -125,28 +125,9 @@ Namespace Core
 
             Select Case flow
                 Case Directions.forward
-                    ' 消耗左边，产生右边
-                    regulate = reaction.Forward.Coefficient
-
-                    If regulate > 0 Then
-                        ' 当前是具有调控效应的
-                        ' 接着计算最小的反应单位
-                        regulate = reaction.CoverLeft(shareFactors.left, regulate)
-                    End If
-                    If regulate > 0 Then
-                        ' 当前的过程是可以进行的
-                        ' 则进行物质的转义的计算
-                        Call reaction.Transition(regulate, flow)
-                    End If
+                    regulate = doForwardTransition(reaction)
                 Case Directions.reverse
-                    regulate = reaction.Reverse.Coefficient
-
-                    If regulate > 0 Then
-                        regulate = reaction.CoverRight(shareFactors.right, regulate)
-                    End If
-                    If regulate > 0 Then
-                        Call reaction.Transition(regulate, flow)
-                    End If
+                    regulate = doReverseTransition(reaction)
                 Case Else
                     ' no reaction will be happends
                     regulate = 0
@@ -155,13 +136,48 @@ Namespace Core
             Return New NamedValue(Of Double)(reaction.ID, flow * regulate)
         End Function
 
+        Private Function doReverseTransition(reaction As Channel) As Double
+            Dim regulate = reaction.Reverse.Coefficient
+
+            If regulate > 0 Then
+                regulate = reaction.CoverRight(shareFactors.right, regulate)
+            End If
+            If regulate > 0 Then
+                Call reaction.Transition(regulate, Directions.reverse)
+            End If
+
+            Return regulate
+        End Function
+
+        ''' <summary>
+        ''' 消耗左边，产生右边
+        ''' </summary>
+        ''' <param name="reaction"></param>
+        ''' <returns></returns>
+        Private Function doForwardTransition(reaction As Channel) As Double
+            Dim regulate = reaction.Forward.Coefficient
+
+            If regulate > 0 Then
+                ' 当前是具有调控效应的
+                ' 接着计算最小的反应单位
+                regulate = reaction.CoverLeft(shareFactors.left, regulate)
+            End If
+            If regulate > 0 Then
+                ' 当前的过程是可以进行的
+                ' 则进行物质的转移的计算
+                Call reaction.Transition(regulate, Directions.forward)
+            End If
+
+            Return regulate
+        End Function
+
         ''' <summary>
         ''' 重置反应环境模拟器之中的内容
         ''' </summary>
         ''' <param name="massInit"></param>
         ''' <returns></returns>
         Public Function Reset(massInit As Dictionary(Of String, Double)) As Vessel
-            For Each mass As Factor In Me.Mass
+            For Each mass As Factor In Me.MassEnvironment
                 mass.Value = massInit(mass.ID)
             Next
 
