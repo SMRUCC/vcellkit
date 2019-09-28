@@ -44,8 +44,8 @@
 Imports Dynamics.Debugger
 Imports Microsoft.VisualBasic.Data.csv
 Imports Microsoft.VisualBasic.Data.csv.IO
-Imports Microsoft.VisualBasic.Data.visualize.Network.FileStream
 Imports Microsoft.VisualBasic.Language
+Imports Microsoft.VisualBasic.Linq
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Dynamics.Core
 
 Module Module1
@@ -62,7 +62,7 @@ Module Module1
 
         Call envir.Initialize()
 
-        For i As Integer = 0 To 10000
+        For i As Integer = 0 To 100000
             flux += New DataSet With {
                 .ID = i,
                 .Properties = envir.ContainerIterator().ToDictionary.FlatTable
@@ -75,7 +75,7 @@ Module Module1
 
         Call snapshots.SaveTo("./test_mass.csv")
         Call flux.SaveTo("./test_flux.csv")
-        Call envir.ToGraph.Tabular.Save("./test_network/")
+        Call envir.ToGraph.DoCall(AddressOf Visualizer.CreateTabularFormat).Save("./test_network/")
 
         Pause()
     End Sub
@@ -90,6 +90,7 @@ Module Module1
         Yield New Factor With {.ID = "G", .Value = 1000}
         Yield New Factor With {.ID = "H", .Value = 1000}
         Yield New Factor With {.ID = "I", .Value = 1000}
+        Yield New Factor With {.ID = "J", .Value = 1000}
     End Function
 
     ''' <summary>
@@ -100,7 +101,7 @@ Module Module1
     Private Iterator Function reactions(massTable As Dictionary(Of String, Factor)) As IEnumerable(Of Channel)
         Dim pop = Iterator Function(names As String()) As IEnumerable(Of Variable)
                       For Each ref In names
-                          Yield New Variable(massTable(ref), 0.05)
+                          Yield New Variable(massTable(ref), 2)
                       Next
                   End Function
 
@@ -162,6 +163,13 @@ Module Module1
             .ID = "HID",
            .Forward = New Controls With {.Activation = pop({"B", "H"}).ToArray},
            .Reverse = New Controls With {.Activation = pop({"A"}).ToArray}
+       }
+
+        Yield New Channel(pop({"I", "D"}), pop({"J", "B"})) With {
+            .bounds = {5, 50},
+            .ID = "IDJB",
+           .Forward = New Controls With {.Activation = pop({"A"}).ToArray},
+           .Reverse = New Controls With {.Activation = pop({"C"}).ToArray}
        }
     End Function
 End Module

@@ -87,7 +87,7 @@ Namespace Core
         ''' 
         ''' </summary>
         ''' <param name="timeResolution">反应变换的时间分辨率</param>
-        Public Sub Initialize(Optional timeResolution# = 1)
+        Public Sub Initialize(Optional timeResolution# = 1000)
             Dim sharedLeft = factorsByCount(True)
             Dim sharedRight = factorsByCount(False)
 
