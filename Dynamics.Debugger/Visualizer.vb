@@ -71,7 +71,7 @@ Public Module Visualizer
                     data:=New EdgeData With {
                         .label = $"{left.Mass.ID}->{reaction.ID}",
                         .length = left.Coefficient,
-                        .weight = left.Coefficient,
+                        .weight = left.Coefficient * left.Mass.Value,
                         .Properties = New Dictionary(Of String, String) From {
                             {NamesOf.REFLECTION_ID_MAPPING_INTERACTION_TYPE, "reactant"}
                         }
@@ -85,7 +85,7 @@ Public Module Visualizer
                     data:=New EdgeData With {
                         .label = $"{reaction.ID}->{right.Mass.ID}",
                         .length = right.Coefficient,
-                        .weight = right.Coefficient,
+                        .weight = right.Coefficient * right.Mass.Value,
                         .Properties = New Dictionary(Of String, String) From {
                             {NamesOf.REFLECTION_ID_MAPPING_INTERACTION_TYPE, "product"}
                         }
@@ -115,7 +115,7 @@ Public Module Visualizer
                 reactionID,
                 data:=New EdgeData With {
                     .label = $"{type} ({factor.Mass.ID} ~ {reactionID})",
-                    .weight = factor.Coefficient,
+                    .weight = factor.Coefficient * factor.Mass.Value,
                     .Properties = New Dictionary(Of String, String) From {
                         {NamesOf.REFLECTION_ID_MAPPING_INTERACTION_TYPE, type}
                     }
