@@ -78,11 +78,24 @@ Namespace Core
         ''' 因为在现实中这些反应过程是同时发生的，所以在这里使用这个共享因子来模拟并行事件
         ''' </summary>
         Dim shareFactors As (left As Dictionary(Of String, Double), right As Dictionary(Of String, Double))
+        ''' <summary>
+        ''' 反应过程在时间上的分辨率，这个参数值必须是大于或者等于1的
+        ''' </summary>
+        Dim resolution As Double
 
-        Public Sub Initialize()
+        ''' <summary>
+        ''' 
+        ''' </summary>
+        ''' <param name="timeResolution">反应变换的时间分辨率</param>
+        Public Sub Initialize(Optional timeResolution# = 1)
             Dim sharedLeft = factorsByCount(True)
             Dim sharedRight = factorsByCount(False)
 
+            If timeResolution < 1 Then
+                timeResolution = 1
+            End If
+
+            resolution = timeResolution
             shareFactors = (sharedLeft, sharedRight)
         End Sub
 
@@ -140,7 +153,7 @@ Namespace Core
             Dim regulate = reaction.Reverse.Coefficient
 
             If regulate > 0 Then
-                regulate = reaction.CoverRight(shareFactors.right, regulate)
+                regulate = reaction.CoverRight(shareFactors.right, regulate, resolution)
             End If
             If regulate > 0 Then
                 Call reaction.Transition(regulate, Directions.reverse)
@@ -160,7 +173,7 @@ Namespace Core
             If regulate > 0 Then
                 ' 当前是具有调控效应的
                 ' 接着计算最小的反应单位
-                regulate = reaction.CoverLeft(shareFactors.left, regulate)
+                regulate = reaction.CoverLeft(shareFactors.left, regulate, resolution)
             End If
             If regulate > 0 Then
                 ' 当前的过程是可以进行的

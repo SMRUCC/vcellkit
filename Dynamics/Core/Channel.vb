@@ -99,8 +99,8 @@ Namespace Core
         ''' <param name="shares">事件并行化模拟因子</param>
         ''' <param name="regulation"></param>
         ''' <returns></returns>
-        Public Function CoverLeft(shares As Dictionary(Of String, Double), regulation As Double) As Double
-            Return minimalUnit(shares, left, regulation, bounds.Max)
+        Public Function CoverLeft(shares As Dictionary(Of String, Double), regulation#, resolution#) As Double
+            Return minimalUnit(shares, left, regulation, bounds.Max) / resolution#
         End Function
 
         ''' <summary>
@@ -109,8 +109,8 @@ Namespace Core
         ''' <param name="shares">事件并行化模拟因子</param>
         ''' <param name="regulation"></param>
         ''' <returns></returns>
-        Public Function CoverRight(shares As Dictionary(Of String, Double), regulation As Double) As Double
-            Return minimalUnit(shares, right, regulation, bounds.Min)
+        Public Function CoverRight(shares As Dictionary(Of String, Double), regulation#, resolution#) As Double
+            Return minimalUnit(shares, right, regulation, bounds.Min) / resolution#
         End Function
 
         ''' <summary>
