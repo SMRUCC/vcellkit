@@ -1,46 +1,47 @@
 ﻿#Region "Microsoft.VisualBasic::047de2211b7dcf5822269e57f4ca74ea, engine\Compiler\Extensions.vb"
 
-    ' Author:
-    ' 
-    '       asuka (amethyst.asuka@gcmodeller.org)
-    '       xie (genetics@smrucc.org)
-    '       xieguigang (xie.guigang@live.com)
-    ' 
-    ' Copyright (c) 2018 GPL3 Licensed
-    ' 
-    ' 
-    ' GNU GENERAL PUBLIC LICENSE (GPL3)
-    ' 
-    ' 
-    ' This program is free software: you can redistribute it and/or modify
-    ' it under the terms of the GNU General Public License as published by
-    ' the Free Software Foundation, either version 3 of the License, or
-    ' (at your option) any later version.
-    ' 
-    ' This program is distributed in the hope that it will be useful,
-    ' but WITHOUT ANY WARRANTY; without even the implied warranty of
-    ' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    ' GNU General Public License for more details.
-    ' 
-    ' You should have received a copy of the GNU General Public License
-    ' along with this program. If not, see <http://www.gnu.org/licenses/>.
+' Author:
+' 
+'       asuka (amethyst.asuka@gcmodeller.org)
+'       xie (genetics@smrucc.org)
+'       xieguigang (xie.guigang@live.com)
+' 
+' Copyright (c) 2018 GPL3 Licensed
+' 
+' 
+' GNU GENERAL PUBLIC LICENSE (GPL3)
+' 
+' 
+' This program is free software: you can redistribute it and/or modify
+' it under the terms of the GNU General Public License as published by
+' the Free Software Foundation, either version 3 of the License, or
+' (at your option) any later version.
+' 
+' This program is distributed in the hope that it will be useful,
+' but WITHOUT ANY WARRANTY; without even the implied warranty of
+' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+' GNU General Public License for more details.
+' 
+' You should have received a copy of the GNU General Public License
+' along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-    ' /********************************************************************************/
+' /********************************************************************************/
 
-    ' Summaries:
+' Summaries:
 
-    ' Module Extensions
-    ' 
-    '     Function: createEnzymes, createMaps, getCompounds, getGenes, getRNAs
-    '               getTFregulations, populateReplicons, ToMarkup, ToTabular
-    ' 
-    ' /********************************************************************************/
+' Module Extensions
+' 
+'     Function: createEnzymes, createMaps, getCompounds, getGenes, getRNAs
+'               getTFregulations, populateReplicons, ToMarkup, ToTabular
+' 
+' /********************************************************************************/
 
 #End Region
 
 Imports System.Runtime.CompilerServices
+Imports Microsoft.VisualBasic.ComponentModel.Collection
 Imports Microsoft.VisualBasic.Language
 Imports Microsoft.VisualBasic.Linq
 Imports Microsoft.VisualBasic.Text.Xml.Models
@@ -65,15 +66,15 @@ Public Module Extensions
     ''' <param name="genomes">染色体基因组+质粒基因组</param>
     ''' <returns></returns>
     <Extension>
-    Friend Iterator Function populateReplicons(model As CellularModule, genomes As Dictionary(Of String, GBFF.File)) As IEnumerable(Of replicon)
+    Friend Iterator Function populateReplicons(model As CellularModule, genomes As Dictionary(Of String, GBFF.File), locationAsLocustag As Boolean) As IEnumerable(Of replicon)
         For Each genome In genomes
             Yield New replicon With {
                 .genomeName = genome.Value.Locus.AccessionID,
                 .genes = genome.Value _
-                    .getGenes _
+                    .getGenes(locationAsLocustag) _
                     .ToArray,
                 .RNAs = model _
-                    .getRNAs(.genomeName) _
+                    .getRNAs(.genomeName, genomes, locationAsLocustag) _
                     .ToArray,
                 .isPlasmid = genome.Value.IsPlasmidSource
             }
@@ -81,8 +82,24 @@ Public Module Extensions
     End Function
 
     <MethodImpl(MethodImplOptions.AggressiveInlining)>
-    <Extension>
-    Private Function getRNAs(model As CellularModule, repliconName$) As IEnumerable(Of RNA)
+    <Extension> Private Function getRNAs(model As CellularModule,
+                                         repliconName$,
+                                         genomes As Dictionary(Of String, GBFF.File),
+                                         locationAsLocustag As Boolean) As IEnumerable(Of RNA)
+
+        Dim geneKeys As Index(Of String) = {"CDS", "tRNA", "rRNA"}
+        Dim genes = genomes.Values _
+            .Select(Function(gb) gb.Features) _
+            .IteratesALL _
+            .Where(Function(gene) gene.KeyName Like geneKeys) _
+            .ToDictionary(Function(g)
+                              If locationAsLocustag Then
+                                  Return g.Location.ToString
+                              Else
+                                  Return g.Query("locus_tag")
+                              End If
+                          End Function)
+
         Return model.Genotype _
             .centralDogmas _
             .Where(Function(proc)
@@ -92,7 +109,10 @@ Public Module Extensions
                         Return New RNA With {
                             .type = proc.RNA.Value,
                             .val = proc.RNA.Description,
-                            .gene = proc.geneID
+                            .gene = proc.geneID,
+                            .nucleotide_base = RNAComposition _
+                                .FromNtSequence(genes(proc.geneID).SequenceData, proc.geneID) _
+                                .CreateVector
                         }
                     End Function)
     End Function
@@ -109,7 +129,8 @@ Public Module Extensions
     Public Function ToMarkup(model As CellularModule,
                              genomes As Dictionary(Of String, GBFF.File),
                              KEGG As RepositoryArguments,
-                             regulations As RegulationFootprint()) As VirtualCell
+                             regulations As RegulationFootprint(),
+                             locationAsLocus_tag As Boolean) As VirtualCell
 
         Dim KOgenes As Dictionary(Of String, CentralDogma) = model _
             .Genotype _
@@ -135,7 +156,7 @@ Public Module Extensions
             .taxonomy = model.Taxonomy,
             .genome = New Genome With {
                 .replicons = model _
-                    .populateReplicons(genomes) _
+                    .populateReplicons(genomes, locationAsLocus_tag) _
                     .ToArray,
                  .regulations = model _
                     .getTFregulations(regulations) _
@@ -187,7 +208,7 @@ Public Module Extensions
                                     .Select(Function(protein)
                                                 Return New [Property] With {
                                                     .name = protein.polypeptide,
-                                                    .Comment = protein.geneID,
+                                                    .comment = protein.geneID,
                                                     .value = term.name
                                                 }
                                             End Function) _
@@ -216,19 +237,35 @@ Public Module Extensions
     End Function
 
     <Extension>
-    Private Iterator Function getGenes(genome As GBFF.File) As IEnumerable(Of gene)
+    Private Iterator Function getGenes(genome As GBFF.File, locationAsLocus_tag As Boolean) As IEnumerable(Of gene)
         Dim proteinSequnce As Dictionary(Of String, ProteinComposition) = genome.Features _
             .Where(Function(feature)
                        Return feature.KeyName = "CDS"
                    End Function) _
             .Select(Function(feature)
-                        Return ProteinComposition.FromRefSeq(feature.Query("translation"), feature.Location.ToString)
+                        Dim id As String
+
+                        If locationAsLocus_tag Then
+                            id = feature.Location.ToString
+                        Else
+                            id = feature.Query("locus_tag")
+                        End If
+
+                        Return ProteinComposition.FromRefSeq(feature.Query("translation"), id)
                     End Function) _
             .ToDictionary(Function(prot)
                               Return prot.proteinID
                           End Function)
+        Dim aa As NumericVector
 
+        ' RNA基因是没有蛋白序列的
         For Each gene As GeneBrief In genome.GbffToPTT(ORF:=False).GeneObjects
+            If proteinSequnce.ContainsKey(gene.Synonym) Then
+                aa = proteinSequnce(gene.Synonym).CreateVector
+            Else
+                aa = Nothing
+            End If
+
             Yield New gene With {
                 .left = gene.Location.left,
                 .right = gene.Location.right,
@@ -236,7 +273,7 @@ Public Module Extensions
                 .product = gene.Product,
                 .protein_id = gene.PID,
                 .strand = gene.Location.Strand.GetBriefCode,
-                .amino_acid = proteinSequnce(.locus_tag).CreateVector
+                .amino_acid = aa
             }
         Next
     End Function
@@ -260,8 +297,8 @@ Public Module Extensions
                 .target = reg.regulated,
                 .motif = New Motif With {
                     .family = reg.family,
-                    .left = reg.motif.Left,
-                    .right = reg.motif.Right,
+                    .left = reg.motif.left,
+                    .right = reg.motif.right,
                     .strand = reg.motif.Strand.GetBriefCode,
                     .sequence = reg.sequenceData,
                     .distance = reg.distance
@@ -289,10 +326,10 @@ Public Module Extensions
             Yield New Compound With {
                 .ID = id,
                 .name = keggModel _
-                    .CommonNames _
-                    .ElementAtOrDefault(0, keggModel.Formula),
+                    .commonNames _
+                    .ElementAtOrDefault(0, keggModel.formula),
                 .otherNames = keggModel _
-                    .CommonNames _
+                    .commonNames _
                     .SafeQuery _
                     .Skip(1) _
                     .ToArray
