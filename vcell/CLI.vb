@@ -1,12 +1,11 @@
 ﻿Imports Microsoft.VisualBasic.CommandLine
 Imports Microsoft.VisualBasic.CommandLine.Reflection
-Imports Microsoft.VisualBasic.Data.csv
 Imports Microsoft.VisualBasic.Data.csv.IO
-Imports Microsoft.VisualBasic.Language
+Imports Microsoft.VisualBasic.Data.csv.IO.Linq
 Imports Microsoft.VisualBasic.Linq
 Imports SMRUCC.genomics.GCModeller.Assembly.GCMarkupLanguage.v2
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Dynamics
-Imports SMRUCC.genomics.GCModeller.ModellingEngine.Dynamics.Core
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Dynamics.Engine
 
 Module CLI
 
@@ -22,36 +21,16 @@ Module CLI
             .DoCall(Function(compounds)
                         Return Definition.KEGG(compounds)
                     End Function)
-        Dim loader As New Loader(def)
-        Dim cell As Core.Vessel = model _
-            .Trim _
-            .CreateModel _
-            .DoCall(AddressOf loader.CreateEnvironment)
-        Dim mass As Dictionary(Of String, Factor) = cell.MassEnvironment.ToDictionary(Function(factor) factor.ID)
+        Dim cell = model.Trim.CreateModel
 
-        Call cell.Initialize()
+        Using snapshots As New WriteStream(Of DataSet)($"{out}/mass.xls", metaBlank:=0, tsv:=True),
+            flux As New WriteStream(Of DataSet)($"{out}/flux.xls", metaBlank:=0, tsv:=True)
 
-        Dim snapshots As New List(Of DataSet)
-        Dim flux As New List(Of DataSet)
-
-        For i As Integer = 0 To 5000
-            flux += New DataSet With {
-                .ID = i,
-                .Properties = cell _
-                    .ContainerIterator() _
-                    .ToDictionary _
-                    .FlatTable
-            }
-            snapshots += New DataSet With {
-                .ID = i,
-                .Properties = mass.ToDictionary(Function(m) m.Key, Function(m) m.Value.Value)
-            }
-
-            Call i.__DEBUG_ECHO
-        Next
-
-        Call snapshots.SaveTo($"{out}/mass.xls", tsv:=True)
-        Call flux.SaveTo($"{out}/flux.xls", tsv:=True)
+            Dim dataStorage As DataStorageEngine = DataStorageEngine.InitializeDriver(cell)
+            Dim engine As Engine = New Engine(def) _
+                .LoadModel(cell) _
+                .AttachBiologicalStorage(dataStorage)
+        End Using
 
         Return 0
     End Function
