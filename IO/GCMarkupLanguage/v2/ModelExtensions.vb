@@ -1,42 +1,42 @@
 ﻿#Region "Microsoft.VisualBasic::2672484539c97a167409db2c73a83cba, engine\IO\GCMarkupLanguage\v2\ModelExtensions.vb"
 
-    ' Author:
-    ' 
-    '       asuka (amethyst.asuka@gcmodeller.org)
-    '       xie (genetics@smrucc.org)
-    '       xieguigang (xie.guigang@live.com)
-    ' 
-    ' Copyright (c) 2018 GPL3 Licensed
-    ' 
-    ' 
-    ' GNU GENERAL PUBLIC LICENSE (GPL3)
-    ' 
-    ' 
-    ' This program is free software: you can redistribute it and/or modify
-    ' it under the terms of the GNU General Public License as published by
-    ' the Free Software Foundation, either version 3 of the License, or
-    ' (at your option) any later version.
-    ' 
-    ' This program is distributed in the hope that it will be useful,
-    ' but WITHOUT ANY WARRANTY; without even the implied warranty of
-    ' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    ' GNU General Public License for more details.
-    ' 
-    ' You should have received a copy of the GNU General Public License
-    ' along with this program. If not, see <http://www.gnu.org/licenses/>.
+' Author:
+' 
+'       asuka (amethyst.asuka@gcmodeller.org)
+'       xie (genetics@smrucc.org)
+'       xieguigang (xie.guigang@live.com)
+' 
+' Copyright (c) 2018 GPL3 Licensed
+' 
+' 
+' GNU GENERAL PUBLIC LICENSE (GPL3)
+' 
+' 
+' This program is free software: you can redistribute it and/or modify
+' it under the terms of the GNU General Public License as published by
+' the Free Software Foundation, either version 3 of the License, or
+' (at your option) any later version.
+' 
+' This program is distributed in the hope that it will be useful,
+' but WITHOUT ANY WARRANTY; without even the implied warranty of
+' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+' GNU General Public License for more details.
+' 
+' You should have received a copy of the GNU General Public License
+' along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-    ' /********************************************************************************/
+' /********************************************************************************/
 
-    ' Summaries:
+' Summaries:
 
-    '     Module ModelExtensions
-    ' 
-    '         Function: createFluxes, createGenotype, CreateModel, createPhenotype, exportRegulations
-    ' 
-    ' 
-    ' /********************************************************************************/
+'     Module ModelExtensions
+' 
+'         Function: createFluxes, createGenotype, CreateModel, createPhenotype, exportRegulations
+' 
+' 
+' /********************************************************************************/
 
 #End Region
 
@@ -140,6 +140,23 @@ Namespace v2
             Return New Phenotype With {
                 .fluxes = model.createFluxes _
                     .OrderByDescending(Function(r) r.enzyme.SafeQuery.Count) _
+                    .ToArray,
+                .enzymes = model.metabolismStructure.Enzymes _
+                    .Select(Function(enz) enz.geneID) _
+                    .ToArray,
+                .proteins = model.genome.replicons _
+                    .Select(Function(genome)
+                                Return genome.genes.AsEnumerable
+                            End Function) _
+                    .IteratesALL _
+                    .Where(Function(gene) Not gene.amino_acid Is Nothing) _
+                    .Select(Function(orf)
+                                Return New Protein With {
+                                    .compounds = {},
+                                    .polypeptides = {orf.protein_id},
+                                    .ProteinID = orf.protein_id
+                                }
+                            End Function) _
                     .ToArray
             }
         End Function
