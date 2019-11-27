@@ -71,6 +71,8 @@ let run as function(i, deletions = NULL, exp.tag = tag.name) {
     engine :> vcell.snapshot(mass, flux, save = `${output.dir}/${exp.tag}${i}/`);
 }
 
+let biological.replicates as integer = 6;
+
 if (background :> file.exists) {
     let geneSet as string;
     let pathwayName as string;
@@ -85,12 +87,15 @@ if (background :> file.exists) {
         geneSet <- cluster :> geneSet.intersects(deletions);
         pathwayName <- (cluster :> as.object)$names 
             :> normalize.filename
-            :> replace();
+            :> string.replace("\\s+", "_");
 
         if (length(geneSet) == 0) {
             next;
         } else {
-            for(i in 1:5) {
+            print(`do pathway cluster deletion mutation for: ${pathwayName}!`);
+            print(`intersect ${length(geneSet)} with the given geneSet.`);
+
+            for(i in 1:biological.replicates) {
                 # run for mutation genome model
                 i :> run(deletions = geneSet, exp.tag = pathwayName);
             }
@@ -98,9 +103,9 @@ if (background :> file.exists) {
     }
 
 } else {
-    # run 5 biological replicate for the 
+    # run 6 biological replicate for the 
     # current virtual cell simulation analysis
-    for(i in 1:5) {
+    for(i in 1:biological.replicates) {
         # run for wildtype
         i :> run;
     }
