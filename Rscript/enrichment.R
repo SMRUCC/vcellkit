@@ -1,12 +1,20 @@
+# demo script for DEM kegg metabolites enrichment analysis 
+
 imports "GCModeller" from "GCModeller_cli.dll";
 
 require(dataframe);
 
-let dem <- [?"--data"] :> read.dataframe(mode = "numeric");
+# cli usage for this demo R script
+# R# ./enrichment.R --data DEM.csv --background GSEA.background_model.Xml --save result_folder 
+
+let dem                  <- [?"--data"] :> read.dataframe(mode = "numeric");
 let background as string <- ?"--background";
-let out as string <- ?"--save";
-let cols <- dem :> dataset.colnames;
-let kit <- list(eggHTS = eggHTS() :> as.object, profiler = profiler() :> as.object);
+let out as string        <- ?"--save";
+let cols                 <- dem :> dataset.colnames;
+let kit                  <- list(
+    eggHTS   = eggHTS()   :> as.object, 
+    profiler = profiler() :> as.object
+);
 
 console::progressbar.pin.top();
 
