@@ -24,7 +24,7 @@ let [up, down] as string;
 let [GSEA.save, geneSet] as string;
 
 let doEnrichment as function(id, file) {
-    geneSet <- `${out}/${fileName}/${file}.txt`;
+    geneSet   <- `${out}/${fileName}/${file}.txt`;
     GSEA.save <- `${out}/${fileName}/${file}.GSEA.txt`;
     id :> writeLines(file = geneSet);
     
@@ -38,10 +38,17 @@ let doEnrichment as function(id, file) {
 for(i in 1:length(cols) step 3) {
     # get foldchange value
     partition <- cols[i+1];
-    fileName <- cols[i];
-    data <- dem :> dataset.project(cols = partition) :> as.object;
-    up <- data :> which(x -> x$GetItemValue(partition) >= 0.1) :> projectAs(x -> x$ID);
-    down <- data :> which(x -> x$GetItemValue(partition) <= neg(0.1)) :> projectAs(x -> x$ID);
+    fileName  <- cols[i];
+    data      <- dem 
+      :> dataset.project(cols = partition) 
+      :> as.object;
+    
+    up   <- data 
+      :> which(x -> x$GetItemValue(partition) >= 0.1) 
+      :> projectAs(x -> x$ID);
+    down <- data 
+      :> which(x -> x$GetItemValue(partition) <= neg(0.1)) 
+      :> projectAs(x -> x$ID);
     
     doEnrichment(up, "up");
     doEnrichment(down, "down");
