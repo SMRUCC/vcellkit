@@ -102,6 +102,7 @@ Namespace Engine.ModelLoader
             Dim trKey, tlKey As String
             Dim regulations As Regulation()
             Dim proteinList As New Dictionary(Of String, String)
+            Dim proteinComplex = loader.massLoader.proteinComplex
 
             ' 在这里分开两个循环来完成构建
             ' 第一步需要一次性的将所有的元素对象都加入到mass table之中
@@ -116,7 +117,7 @@ Namespace Engine.ModelLoader
                 If Not cd.polypeptide Is Nothing Then
                     Call MassTable.AddNew(cd.polypeptide)
                     Call mRNA.Add(cd.geneID)
-                    Call proteinList.Add(cd.geneID, cd.polypeptide)
+                    Call proteinList.Add(cd.geneID, proteinComplex(cd.polypeptide))
                 Else
                     Call componentRNA.Add(cd.geneID)
                 End If
