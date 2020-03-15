@@ -8,7 +8,7 @@ let vcell = model :> read.vcell;
 
 vcell 
 :> vcell.mass.kegg
-:> engine.load(vcell)
+:> engine.load(vcell.model(vcell))
 :> vcell.mass.graph
 :> save.network(file = output)
 ;
