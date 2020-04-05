@@ -13,16 +13,17 @@ Namespace MarkupCompiler
 
     Public Class v2MarkupCompiler : Inherits Compiler(Of VirtualCell)
 
-        ReadOnly model As CellularModule
         ReadOnly genomes As Dictionary(Of String, GBFF.File)
         ReadOnly KEGG As RepositoryArguments
         ReadOnly regulations As RegulationFootprint()
-        ReadOnly locationAsLocus_tag As Boolean
+
+        Friend ReadOnly model As CellularModule
+        Friend ReadOnly locationAsLocus_tag As Boolean
 
         ''' <summary>
         ''' 
         ''' </summary>
-        ''' <param name="model"></param>
+        ''' <param name="model">中间模型数据</param>
         ''' <param name="genomes"></param>
         ''' <param name="KEGG"></param>
         ''' <param name="regulations">
@@ -63,12 +64,13 @@ Namespace MarkupCompiler
                                   Return g.ToArray
                               End Function)
             Dim allCompounds As CompoundRepository = KEGG.GetCompounds
+            Dim genomeCompiler As New CompileGenomeWorkflow(Me)
 
             Return New VirtualCell With {
                 .taxonomy = model.Taxonomy,
                 .genome = New Genome With {
-                    .replicons = model _
-                        .populateReplicons(genomes, locationAsLocus_tag) _
+                    .replicons = genomeCompiler _
+                        .populateReplicons(genomes) _
                         .ToArray,
                      .regulations = model _
                         .getTFregulations(regulations, allCompounds.CreateMapping) _
