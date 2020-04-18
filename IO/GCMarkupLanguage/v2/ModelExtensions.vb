@@ -198,48 +198,50 @@ Namespace v2
                 equation = Equation.TryParse(reaction.Equation)
 
                 If reaction.is_enzymatic Then
-                    KO = enzymes.TryGetValue(reaction.ID, mute:=True)
+                    KO = enzymes.TryGetValue(reaction.ID, [default]:={}, mute:=True)
 
                     If KO.IsNullOrEmpty Then
                         ' 当前的基因组内没有对应的酶来催化这个反应过程
                         ' 则限制一个很小的range
                         bounds = {10, 10}
+                        ' 标准的米氏方程？
+                        kinetics = {}
                     Else
                         bounds = {500, 1000.0}
+                        kinetics = KO _
+                            .Where(Function(c) Not c.Value.formula Is Nothing) _
+                            .Where(Function(c) c.Value.reaction = reaction.ID) _
+                            .Select(Function(k)
+                                        Return New Kinetics With {
+                                            .enzyme = k.Name,
+                                            .formula = ScriptEngine.ParseExpression(k.Value.formula.lambda),
+                                            .parameters = k.Value.formula.parameters,
+                                            .paramVals = k.Value.parameter _
+                                                .Select(Function(a)
+                                                            If a.value.IsNaNImaginary Then
+                                                                Return a.target
+                                                            Else
+                                                                Return a.value
+                                                            End If
+                                                        End Function) _
+                                                .ToArray,
+                                            .target = reaction.ID,
+                                            .PH = k.Value.PH,
+                                            .temperature = k.Value.temperature
+                                        }
+                                    End Function) _
+                            .ToArray
                     End If
                 Else
                     KO = {}
                     bounds = {200, 200.0}
+                    kinetics = {}
                 End If
 
                 If Not equation.reversible Then
                     ' only forward flux direction
                     bounds(Scan0) = 0
                 End If
-
-                kinetics = KO _
-                    .Where(Function(c) Not c.Value.formula Is Nothing) _
-                    .Where(Function(c) c.Value.reaction = reaction.ID) _
-                    .Select(Function(k)
-                                Return New Kinetics With {
-                                    .enzyme = k.Name,
-                                    .formula = ScriptEngine.ParseExpression(k.Value.formula.lambda),
-                                    .parameters = k.Value.formula.parameters,
-                                    .paramVals = k.Value.parameter _
-                                        .Select(Function(a)
-                                                    If a.value.IsNaNImaginary Then
-                                                        Return a.target
-                                                    Else
-                                                        Return a.value
-                                                    End If
-                                                End Function) _
-                                        .ToArray,
-                                    .target = reaction.ID,
-                                    .PH = k.Value.PH,
-                                    .temperature = k.Value.temperature
-                                }
-                            End Function) _
-                    .ToArray
 
                 Yield New FluxModel With {
                     .ID = reaction.ID,
