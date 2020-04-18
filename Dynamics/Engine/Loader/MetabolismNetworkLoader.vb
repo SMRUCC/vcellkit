@@ -87,8 +87,8 @@ Namespace Engine.ModelLoader
         End Function
 
         Private Function fluxByReaction(reaction As Reaction, KOfunctions As Dictionary(Of String, String())) As Channel
-            Dim left = MassTable.variables(reaction.substrates, infinitySource)
-            Dim right = MassTable.variables(reaction.products, infinitySource)
+            Dim left As Variable() = MassTable.variables(reaction.substrates, infinitySource).ToArray
+            Dim right As Variable() = MassTable.variables(reaction.products, infinitySource).ToArray
             Dim bounds As New Boundary With {
                 .forward = reaction.bounds(1),
                 .reverse = reaction.bounds(0)
@@ -125,7 +125,7 @@ Namespace Engine.ModelLoader
                         .ToArray,
                     .baseline = 15
                 },
-                .reverse = New Controls With {.baseline = 15}
+                .reverse = Controls.StaticControl(15)
             }
 
             ' 假设所有的反应过程化都存在产物抑制效应
