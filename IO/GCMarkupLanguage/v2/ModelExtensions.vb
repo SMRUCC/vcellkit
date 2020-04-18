@@ -47,6 +47,7 @@ Imports Microsoft.VisualBasic.Linq
 Imports SMRUCC.genomics.ComponentModel.EquaionModel.DefaultTypes
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model
 Imports FluxModel = SMRUCC.genomics.GCModeller.ModellingEngine.Model.Reaction
+Imports Microsoft.VisualBasic.Math.Scripting
 
 Namespace v2
 
@@ -178,7 +179,7 @@ Namespace v2
                             Return enz _
                                 .catalysis _
                                 .Select(Function(ec)
-                                            Return (rID:=ec.reaction, enz:=enz.KO)
+                                            Return (rID:=ec.reaction, enz:=New NamedValue(Of Catalysis)(enz.KO, ec))
                                         End Function)
                         End Function) _
                 .IteratesALL _
@@ -189,8 +190,9 @@ Namespace v2
                                           .Distinct _
                                           .ToArray
                               End Function)
-            Dim KO$()
+            Dim KO As NamedValue(Of Catalysis)()
             Dim bounds As Double()
+            Dim kinetics As Kinetics()
 
             For Each reaction As Reaction In model.metabolismStructure.reactions.AsEnumerable
                 equation = Equation.TryParse(reaction.Equation)
@@ -215,6 +217,30 @@ Namespace v2
                     bounds(Scan0) = 0
                 End If
 
+                kinetics = KO _
+                    .Where(Function(c) Not c.Value.formula Is Nothing) _
+                    .Where(Function(c) c.Value.reaction = reaction.ID) _
+                    .Select(Function(k)
+                                Return New Kinetics With {
+                                    .enzyme = k.Name,
+                                    .formula = ScriptEngine.ParseExpression(k.Value.formula.lambda),
+                                    .parameters = k.Value.formula.parameters,
+                                    .paramVals = k.Value.parameter _
+                                        .Select(Function(a)
+                                                    If a.value.IsNaNImaginary Then
+                                                        Return a.target
+                                                    Else
+                                                        Return a.value
+                                                    End If
+                                                End Function) _
+                                        .ToArray,
+                                    .target = reaction.ID,
+                                    .PH = k.Value.PH,
+                                    .temperature = k.Value.temperature
+                                }
+                            End Function) _
+                    .ToArray
+
                 Yield New FluxModel With {
                     .ID = reaction.ID,
                     .name = reaction.name,
@@ -224,8 +250,9 @@ Namespace v2
                     .products = equation.Products _
                         .Select(Function(c) c.AsFactor) _
                         .ToArray,
-                    .enzyme = KO,
-                    .bounds = bounds
+                    .enzyme = KO.Keys.Distinct.ToArray,
+                    .bounds = bounds,
+                    .kinetics = kinetics
                 }
             Next
         End Function
