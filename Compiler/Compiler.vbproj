@@ -170,6 +170,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblyScript\ScriptScanner.vb" />
     <Compile Include="AssemblyScript\Commands\From.vb" />
     <Compile Include="AssemblyScript\Environment.vb" />
     <Compile Include="AssemblyScript\Commands\Command.vb" />
