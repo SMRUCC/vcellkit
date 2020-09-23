@@ -12,6 +12,6 @@
         End Property
 
         Public MustOverride Function Execute(env As Environment) As Object
-
+        Public MustOverride Overrides Function ToString() As String
     End Class
 End Namespace
