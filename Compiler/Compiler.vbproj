@@ -170,6 +170,8 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblyScript\Compiler.vb" />
+    <Compile Include="AssemblyScript\Registry.vb" />
     <Compile Include="AssemblyScript\Commands\Add.vb" />
     <Compile Include="AssemblyScript\Commands\Entry.vb" />
     <Compile Include="AssemblyScript\Commands\Delete.vb" />
@@ -182,6 +184,7 @@
     <Compile Include="AssemblyScript\Environment.vb" />
     <Compile Include="AssemblyScript\Commands\Command.vb" />
     <Compile Include="AssemblyScript\NamespaceDoc.vb" />
+    <Compile Include="AssemblyScript\SyntaxTree\SyntaxParser.vb" />
     <Compile Include="KineticsModeller\Modeller.vb" />
     <Compile Include="KineticsModeller\KineticsModellerHelpers.vb" />
     <Compile Include="MarkupCompiler\CompilerWorkflow.vb" />
