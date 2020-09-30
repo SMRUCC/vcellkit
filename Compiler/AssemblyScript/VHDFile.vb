@@ -1,4 +1,5 @@
 ﻿Imports SMRUCC.genomics.GCModeller.Compiler.AssemblyScript.Commands
+Imports SMRUCC.genomics.GCModeller.Compiler.AssemblyScript.Script
 
 Namespace AssemblyScript
 
@@ -16,7 +17,7 @@ Namespace AssemblyScript
         Public Property modifications As Modification()
 
         Public Shared Function Parse(script As String) As VHDFile
-            Dim scriptText As String() = script.SolveStream.LineTokens.ToArray
+            Dim scanner As New Scanner(script.SolveStream)
 
         End Function
 

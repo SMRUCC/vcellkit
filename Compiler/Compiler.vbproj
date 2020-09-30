@@ -182,7 +182,7 @@
     <Compile Include="AssemblyScript\Commands\metadata\Label.vb" />
     <Compile Include="AssemblyScript\Commands\metadata\Maintainer.vb" />
     <Compile Include="AssemblyScript\Script\Tokens.vb" />
-    <Compile Include="AssemblyScript\Script\ScriptScanner.vb" />
+    <Compile Include="AssemblyScript\Script\Scanner.vb" />
     <Compile Include="AssemblyScript\Commands\From.vb" />
     <Compile Include="AssemblyScript\Environment.vb" />
     <Compile Include="AssemblyScript\Commands\Command.vb" />
