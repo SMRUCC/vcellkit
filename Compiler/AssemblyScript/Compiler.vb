@@ -1,32 +1,20 @@
-﻿Namespace AssemblyScript
+﻿Imports Microsoft.VisualBasic.CommandLine
+Imports SMRUCC.genomics.GCModeller.Assembly.GCMarkupLanguage.v2
+Imports SMRUCC.genomics.GCModeller.CompilerServices
 
-    Public Class Compiler : Implements IDisposable
+Namespace AssemblyScript
 
-        Private disposedValue As Boolean
+    Public Class Compiler : Inherits Compiler(Of VirtualCell)
 
-        Protected Overridable Sub Dispose(disposing As Boolean)
-            If Not disposedValue Then
-                If disposing Then
-                    ' TODO: dispose managed state (managed objects)
-                End If
+        Dim registry As Registry
+        Dim session As Environment
 
-                ' TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                ' TODO: set large fields to null
-                disposedValue = True
-            End If
-        End Sub
+        Public Shared Function Build(vhd As String) As VirtualCell
 
-        ' ' TODO: override finalizer only if 'Dispose(disposing As Boolean)' has code to free unmanaged resources
-        ' Protected Overrides Sub Finalize()
-        '     ' Do not change this code. Put cleanup code in 'Dispose(disposing As Boolean)' method
-        '     Dispose(disposing:=False)
-        '     MyBase.Finalize()
-        ' End Sub
+        End Function
 
-        Public Sub Dispose() Implements IDisposable.Dispose
-            ' Do not change this code. Put cleanup code in 'Dispose(disposing As Boolean)' method
-            Dispose(disposing:=True)
-            GC.SuppressFinalize(Me)
-        End Sub
+        Protected Overrides Function CompileImpl(args As CommandLine) As Integer
+            Throw New NotImplementedException()
+        End Function
     End Class
 End Namespace
