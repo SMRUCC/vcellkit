@@ -9,8 +9,8 @@ Namespace AssemblyScript
         Dim registry As Registry
         Dim session As Environment
 
-        Public Shared Function Build(vhd As String) As VirtualCell
-
+        Public Shared Function Build(vhd As String, registry As Registry) As VirtualCell
+            Dim assemblyScript As VHDFile = VHDFile.Parse(vhd)
         End Function
 
         Protected Overrides Function CompileImpl(args As CommandLine) As Integer

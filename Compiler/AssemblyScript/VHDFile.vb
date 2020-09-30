@@ -16,6 +16,7 @@ Namespace AssemblyScript
         Public Property modifications As Modification()
 
         Public Shared Function Parse(script As String) As VHDFile
+            Dim scriptText As String() = script.SolveStream.LineTokens.ToArray
 
         End Function
 
