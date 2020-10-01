@@ -73,7 +73,7 @@ Namespace AssemblyScript.Script
                 If Not (token = walkChar(++script)) Is Nothing Then
                     Yield token.Value
 
-                    If buf = "," Then
+                    If buf = "," OrElse buf = "=" OrElse buf = "::" Then
                         Yield populateToken()
                     End If
                 End If
@@ -108,8 +108,8 @@ Namespace AssemblyScript.Script
                 Else
                     Return populateToken()
                 End If
-            ElseIf c = ","c Then
-                Return populateToken(","c)
+            ElseIf c = ","c OrElse c = "="c Then
+                Return populateToken(c)
             ElseIf c = ASCII.Quot Then
                 escapes.string = True
                 Return populateToken(""""c)
@@ -145,6 +145,8 @@ Namespace AssemblyScript.Script
                 Return New Token(Tokens.comma, token)
             ElseIf token = "=" Then
                 Return New Token(Tokens.assign, token)
+            ElseIf token = "::" Then
+                Return New Token(Tokens.reference, token)
             ElseIf token.IsPattern("[a-zA-Z][:-_.a-zA-Z0-9]*") Then
                 Return New Token(Tokens.symbol, token)
             ElseIf PrimitiveParser.IsInteger(token) OrElse token.IsNumeric Then
