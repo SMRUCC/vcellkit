@@ -8,7 +8,13 @@ Namespace AssemblyScript.Commands
     Public Class Delete : Inherits Modification
 
         Sub New(tokens As Token())
+            tokens = tokens.Skip(1).ToArray
 
+            If tokens.Any(Function(a) a.name = Script.Tokens.comma) Then
+                entry = New EntryIdVector(tokens)
+            Else
+                entry = New CategoryEntry(tokens)
+            End If
         End Sub
 
         Public Overrides Function Execute(env As Environment) As Object
