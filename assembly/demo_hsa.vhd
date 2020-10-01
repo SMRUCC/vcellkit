@@ -20,7 +20,7 @@ FROM hsa:20200929
 
 -- MAINTAINER is a kind of shortcut of the 
 -- LABEL maintainer="xxx"
-MAINTAINER xieguigang <xie.guigang@gcmodeller.org>
+MAINTAINER xieguigang "<xie.guigang@gcmodeller.org>"
 
 -- keyword is a term list that used for registry indexing
 -- of your generated virtual cell model

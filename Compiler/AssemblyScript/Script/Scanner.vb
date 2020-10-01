@@ -72,6 +72,10 @@ Namespace AssemblyScript.Script
             Do While script
                 If Not (token = walkChar(++script)) Is Nothing Then
                     Yield token.Value
+
+                    If buf = "," Then
+                        Yield populateToken()
+                    End If
                 End If
             Loop
         End Function
@@ -107,6 +111,7 @@ Namespace AssemblyScript.Script
             ElseIf c = ","c Then
                 Return populateToken(","c)
             ElseIf c = ASCII.Quot Then
+                escapes.string = True
                 Return populateToken(""""c)
             Else
                 buf += c
