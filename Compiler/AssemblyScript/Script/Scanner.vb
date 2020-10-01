@@ -98,7 +98,12 @@ Namespace AssemblyScript.Script
             End If
 
             If c = " "c OrElse c = ASCII.TAB OrElse c = ASCII.CR OrElse c = ASCII.LF Then
-                Return populateToken()
+                If buf = "--" Then
+                    escapes.comment = True
+                    Return Nothing
+                Else
+                    Return populateToken()
+                End If
             ElseIf c = ","c Then
                 Return populateToken(","c)
             ElseIf c = ASCII.Quot Then
@@ -117,7 +122,11 @@ Namespace AssemblyScript.Script
                 buf += CChar(cacheNext)
             End If
 
-            Return populateToken2(token)
+            If token = "" Then
+                Return Nothing
+            Else
+                Return populateToken2(token)
+            End If
         End Function
 
         Private Function populateToken2(token As String) As Token
@@ -131,7 +140,7 @@ Namespace AssemblyScript.Script
                 Return New Token(Tokens.comma, token)
             ElseIf token = "=" Then
                 Return New Token(Tokens.assign, token)
-            ElseIf token.IsPattern("[a-zA-Z][-_.a-zA-Z0-9]") Then
+            ElseIf token.IsPattern("[a-zA-Z][:-_.a-zA-Z0-9]*") Then
                 Return New Token(Tokens.symbol, token)
             ElseIf PrimitiveParser.IsInteger(token) OrElse token.IsNumeric Then
                 Return New Token(Tokens.number, token)
