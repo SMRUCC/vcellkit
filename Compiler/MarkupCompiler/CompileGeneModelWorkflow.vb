@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::016eb5b699200eb737af9f148ec69da5, engine\Compiler\MarkupCompiler\CompileGeneModelWorkflow.vb"
+﻿#Region "Microsoft.VisualBasic::ea06f360eac5f330e90c1b1930c35579, engine\Compiler\MarkupCompiler\CompileGeneModelWorkflow.vb"
 
     ' Author:
     ' 
@@ -31,6 +31,18 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 105
+    '    Code Lines: 90 (85.71%)
+    ' Comment Lines: 2 (1.90%)
+    '    - Xml Docs: 0.00%
+    ' 
+    '   Blank Lines: 13 (12.38%)
+    '     File Size: 4.58 KB
+
+
     '     Class CompileGeneModelWorkflow
     ' 
     '         Properties: locationAsLocus_tag
@@ -44,13 +56,13 @@
 #End Region
 
 Imports Microsoft.VisualBasic.ComponentModel.Collection
-Imports Microsoft.VisualBasic.Linq
 Imports Microsoft.VisualBasic.Text.Xml.Models
 Imports SMRUCC.genomics.Assembly.NCBI.GenBank
 Imports SMRUCC.genomics.Assembly.NCBI.GenBank.TabularFormat.ComponentModels
 Imports SMRUCC.genomics.GCModeller.Assembly.GCMarkupLanguage.v2
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model
-Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Vector
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular.Vector
 
 Namespace MarkupCompiler
 
@@ -58,7 +70,7 @@ Namespace MarkupCompiler
 
         Public ReadOnly Property locationAsLocus_tag As Boolean
             Get
-                Return compiler.locationAsLocus_tag
+                'Return compiler.locationAsLocus_tag
             End Get
         End Property
 
@@ -88,7 +100,7 @@ Namespace MarkupCompiler
         End Function
 
         Public Iterator Function getGenes(genome As GBFF.File) As IEnumerable(Of gene)
-            Dim model As CellularModule = compiler.model
+            Dim model As CellularModule ' = compiler.model
             Dim proteinSequnce As Dictionary(Of String, ProteinComposition) = getProtVector(genome)
             Dim genes = genome.Features _
                 .Where(Function(feature)

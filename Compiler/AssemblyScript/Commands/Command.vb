@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::03c02a21094cd93c6f91a6f3cd02f56c, engine\Compiler\AssemblyScript\Commands\Command.vb"
+﻿#Region "Microsoft.VisualBasic::90a91f847c4b439dadabc23507725edf, engine\Compiler\AssemblyScript\Commands\Command.vb"
 
     ' Author:
     ' 
@@ -31,9 +31,23 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 22
+    '    Code Lines: 14 (63.64%)
+    ' Comment Lines: 3 (13.64%)
+    '    - Xml Docs: 100.00%
+    ' 
+    '   Blank Lines: 5 (22.73%)
+    '     File Size: 655 B
+
+
     '     Class Command
     ' 
     '         Properties: commandName
+    ' 
+    '         Function: stripValueString
     ' 
     ' 
     ' /********************************************************************************/

@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::61a3654fc2fe639e9600fd86edea569a, engine\Compiler\MarkupCompiler\CompileMetabolismWorkflow.vb"
+﻿#Region "Microsoft.VisualBasic::780b4ebde69b75eb4c84f939a07217fb, engine\Compiler\MarkupCompiler\CompileMetabolismWorkflow.vb"
 
     ' Author:
     ' 
@@ -31,6 +31,18 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 108
+    '    Code Lines: 96 (88.89%)
+    ' Comment Lines: 0 (0.00%)
+    '    - Xml Docs: 0.00%
+    ' 
+    '   Blank Lines: 12 (11.11%)
+    '     File Size: 5.07 KB
+
+
     '     Class CompileMetabolismWorkflow
     ' 
     '         Constructor: (+1 Overloads) Sub New
@@ -48,7 +60,7 @@ Imports SMRUCC.genomics.Assembly.KEGG.DBGET
 Imports SMRUCC.genomics.ComponentModel.EquaionModel.DefaultTypes
 Imports SMRUCC.genomics.Data
 Imports SMRUCC.genomics.GCModeller.Assembly.GCMarkupLanguage.v2
-Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular.Process
 Imports XmlReaction = SMRUCC.genomics.GCModeller.Assembly.GCMarkupLanguage.v2.Reaction
 
 Namespace MarkupCompiler
@@ -118,19 +130,14 @@ Namespace MarkupCompiler
                 .IteratesALL _
                 .Distinct _
                 .ToArray
-            Dim compounds As CompoundRepository = compiler.KEGG.GetCompounds
+            Dim compounds As CompoundRepository '= compiler.KEGG.GetCompounds
 
             For Each id As String In allCompoundId.Where(Function(cid) compounds.Exists(cid))
                 Dim keggModel = compounds.GetByKey(id).Entity
 
                 Yield New Compound With {
                     .ID = id,
-                    .name = keggModel.commonNames _
-                        .ElementAtOrDefault(0, keggModel.formula),
-                    .otherNames = keggModel.commonNames _
-                        .SafeQuery _
-                        .Skip(1) _
-                        .ToArray
+                    .name = keggModel.commonNames.ElementAtOrDefault(0, keggModel.formula)
                 }
             Next
         End Function

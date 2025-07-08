@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::6874ed4fca48cd5bbb9c469eb2bd9e57, engine\CompilerServices\Compiler.vb"
+﻿#Region "Microsoft.VisualBasic::b67b3c8b27af857134b8d8b788b0accc, engine\CompilerServices\Compiler.vb"
 
     ' Author:
     ' 
@@ -31,6 +31,18 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 185
+    '    Code Lines: 116 (62.70%)
+    ' Comment Lines: 35 (18.92%)
+    '    - Xml Docs: 57.14%
+    ' 
+    '   Blank Lines: 34 (18.38%)
+    '     File Size: 6.59 KB
+
+
     ' Class Compiler
     ' 
     '     Properties: [Return], CompileLogging, Version
@@ -45,6 +57,7 @@
 #End Region
 
 Imports Microsoft.VisualBasic.ApplicationServices.Debugging.Logging
+Imports Microsoft.VisualBasic.ApplicationServices.Development
 Imports Microsoft.VisualBasic.CommandLine
 Imports Microsoft.VisualBasic.Language
 Imports Microsoft.VisualBasic.Linq
@@ -52,7 +65,9 @@ Imports Microsoft.VisualBasic.Linq
 ''' <summary>
 ''' Model file of class type <see cref="ModelBaseType"></see> compiler.
 ''' </summary>
-''' <typeparam name="TModel"></typeparam>
+''' <typeparam name="TModel">
+''' the output model file
+''' </typeparam>
 ''' <remarks></remarks>
 Public MustInherit Class Compiler(Of TModel As ModelBaseType)
     Implements IDisposable
@@ -62,7 +77,7 @@ Public MustInherit Class Compiler(Of TModel As ModelBaseType)
 
     Public Overridable ReadOnly Property Version As Version
         Get
-            Return My.Application.Info.Version
+            Return Version.Parse(MyClass.GetType.Assembly.FromAssembly.AssemblyVersion)
         End Get
     End Property
 

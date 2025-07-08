@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::8f6a56cb5f42afdb1c32e6e1afed9b52, engine\CompilerServices\ModelBase\Property.vb"
+﻿#Region "Microsoft.VisualBasic::f4b0df37e38e256a997f7df65d3b3a04, engine\CompilerServices\ModelBase\Property.vb"
 
     ' Author:
     ' 
@@ -31,6 +31,18 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 36
+    '    Code Lines: 27 (75.00%)
+    ' Comment Lines: 3 (8.33%)
+    '    - Xml Docs: 100.00%
+    ' 
+    '   Blank Lines: 6 (16.67%)
+    '     File Size: 1.27 KB
+
+
     ' Class [Property]
     ' 
     '     Properties: authors, comment, compiled, DBLinks, Emails
@@ -58,21 +70,21 @@ Public Class [Property]
     <XmlElement> Public Property guid As String
     <XmlElement> Public Property specieId As String
     <XmlElement> Public Property title As String
-    <XmlElement> Public Property Emails As List(Of String)
-    <XmlElement> Public Property authors As List(Of String)
+    <XmlElement> Public Property Emails As String()
+    <XmlElement> Public Property authors As String()
     <XmlElement> Public Property comment As String
-    <XmlElement> Public Property publications As List(Of String)
-    <XmlElement> Public Property URLs As List(Of String)
+    <XmlElement> Public Property publications As String()
+    <XmlElement> Public Property URLs As String()
 
     Public Property DBLinks As String()
 
     Sub New()
-        authors = New List(Of String) From {My.Computer.Name}
+        authors = New String() {Environment.MachineName}
         compiled = Now.ToString
-        Emails = New List(Of String)
+        Emails = New String() {}
         guid = System.Guid.NewGuid.ToString
-        publications = New List(Of String)
-        URLs = New List(Of String) From {"https://gcmodeller.org/"}
+        publications = New String() {}
+        URLs = New String() {"https://gcmodeller.org/"}
         DBLinks = New String() {}
     End Sub
 

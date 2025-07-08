@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::6df80b12886e97ae6071450e5ca06e20, engine\IO\GCMarkupLanguage\v2\Xml\VirtualCell.vb"
+﻿#Region "Microsoft.VisualBasic::efd632c3bdabb8674a2a6d857bd258c1, engine\IO\GCMarkupLanguage\v2\Xml\VirtualCell.vb"
 
     ' Author:
     ' 
@@ -31,6 +31,18 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 101
+    '    Code Lines: 60 (59.41%)
+    ' Comment Lines: 23 (22.77%)
+    '    - Xml Docs: 100.00%
+    ' 
+    '   Blank Lines: 18 (17.82%)
+    '     File Size: 3.89 KB
+
+
     '     Class VirtualCell
     ' 
     '         Properties: genome, metabolismStructure, taxonomy
@@ -54,8 +66,11 @@ Imports SMRUCC.genomics.Metagenomics
 Namespace v2
 
     ''' <summary>
-    ''' 虚拟细胞数据模型Xml文件
+    ''' The virtual cell model xml file 
     ''' </summary>
+    ''' <remarks>
+    ''' 虚拟细胞数据模型Xml文件
+    ''' </remarks>
     <XmlRoot(NameOf(VirtualCell), [Namespace]:=VirtualCell.GCMarkupLanguage)>
     Public Class VirtualCell : Inherits ModelBaseType
 
@@ -80,8 +95,7 @@ Namespace v2
         Public Const GCMarkupLanguage$ = "https://bioCAD.gcmodeller.org/XML/schema_revision/GCMarkup_2.0"
 
         Sub New()
-            Call MyBase.New
-
+            Call MyBase.New()
             Call xmlns.Add("GCModeller", SMRUCC.genomics.LICENSE.GCModeller)
         End Sub
 
@@ -112,9 +126,9 @@ Namespace v2
             Call sb.AppendLine()
             Call sb.AppendLine("genomes:")
 
-            For Each replicon In model.genome.replicons
+            For Each replicon As replicon In model.genome.replicons
                 type = If(replicon.isPlasmid, "plasmid", "chromosome")
-                sb.AppendLine($" [{replicon.genomeName}, {type}] {replicon.genes.size} genes")
+                sb.AppendLine($" [{replicon.genomeName}, {type}] {replicon.GetGeneNumbers} genes")
             Next
 
             Call sb.AppendLine()

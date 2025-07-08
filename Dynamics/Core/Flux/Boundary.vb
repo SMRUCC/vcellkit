@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::d9fbd2ea18dae063f2197e11d77734ac, engine\Dynamics\Core\Flux\Boundary.vb"
+﻿#Region "Microsoft.VisualBasic::2a0e282bf6ea55f18985b09df2474759, engine\Dynamics\Core\Flux\Boundary.vb"
 
     ' Author:
     ' 
@@ -31,10 +31,23 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 37
+    '    Code Lines: 21 (56.76%)
+    ' Comment Lines: 7 (18.92%)
+    '    - Xml Docs: 100.00%
+    ' 
+    '   Blank Lines: 9 (24.32%)
+    '     File Size: 1.09 KB
+
+
     '     Class Boundary
     ' 
     '         Properties: forward, reverse
     ' 
+    '         Constructor: (+2 Overloads) Sub New
     '         Function: ToString
     ' 
     ' 
@@ -44,6 +57,9 @@
 
 Namespace Core
 
+    ''' <summary>
+    ''' the reaction flux dynamics bounds range
+    ''' </summary>
     Public Class Boundary
 
         Public Property forward As Double
@@ -53,6 +69,14 @@ Namespace Core
         ''' </summary>
         ''' <returns></returns>
         Public Property reverse As Double
+
+        Sub New()
+        End Sub
+
+        Sub New(forward As Double, reverse As Double)
+            Me.forward = forward
+            Me.reverse = reverse
+        End Sub
 
         Public Overrides Function ToString() As String
             Return $"[reactant <- {reverse} | {forward} -> product]"

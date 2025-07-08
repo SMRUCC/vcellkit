@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::145d7907d156e2d9884a0ad6726f0d27, engine\Compiler\Workflow.vb"
+﻿#Region "Microsoft.VisualBasic::6e960ec6fda136834d26a78bf1bfa26b, engine\Compiler\Workflow.vb"
 
     ' Author:
     ' 
@@ -31,6 +31,18 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 310
+    '    Code Lines: 235 (75.81%)
+    ' Comment Lines: 41 (13.23%)
+    '    - Xml Docs: 65.85%
+    ' 
+    '   Blank Lines: 34 (10.97%)
+    '     File Size: 13.49 KB
+
+
     ' Module Workflow
     ' 
     '     Function: AssemblingGenomeInformation, AssemblingMetabolicNetwork, AssemblingRegulationNetwork, BuildReactions, converts
@@ -52,6 +64,9 @@ Imports SMRUCC.genomics.ComponentModel.EquaionModel.DefaultTypes
 Imports SMRUCC.genomics.Data
 Imports SMRUCC.genomics.Data.Regprecise
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular.Molecule
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular.Process
 Imports SMRUCC.genomics.Metagenomics
 
 ''' <summary>
@@ -120,7 +135,9 @@ Public Module Workflow
     ''' <param name="repo"></param>
     ''' <returns></returns>
     <Extension>
-    Public Function AssemblingMetabolicNetwork(cell As CellularModule, KOfunction As Dictionary(Of String, String), repo As RepositoryArguments) As CellularModule
+    Public Function AssemblingMetabolicNetwork(cell As CellularModule,
+                                               KOfunction As Dictionary(Of String, String),
+                                               repo As RepositoryArguments) As CellularModule
         Dim phenotype As New Phenotype With {
             .fluxes = repo _
                 .GetReactions _
@@ -206,10 +223,10 @@ Public Module Workflow
     Private Function glycan2Cpd(factors As IEnumerable(Of FactorString(Of Double)), glycan2CpdMaps As Dictionary(Of String, String)) As FactorString(Of Double)()
         Return factors _
             .Select(Function(factor)
-                        If glycan2CpdMaps.ContainsKey(factor.text) Then
+                        If glycan2CpdMaps.ContainsKey(factor.result) Then
                             Return New FactorString(Of Double) With {
                                 .factor = factor.factor,
-                                .text = glycan2CpdMaps(factor.text)
+                                .result = glycan2CpdMaps(factor.result)
                             }
                         Else
                             Return factor
@@ -238,7 +255,10 @@ Public Module Workflow
     ''' </param>
     ''' <returns></returns>
     <Extension>
-    Friend Iterator Function GetCentralDogmas(genomes As Dictionary(Of String, GBFF.File), KOfunction As Dictionary(Of String, String), locationAsLocustag As Boolean) As IEnumerable(Of CentralDogma)
+    Friend Iterator Function GetCentralDogmas(genomes As Dictionary(Of String, GBFF.File),
+                                              KOfunction As Dictionary(Of String, String),
+                                              locationAsLocustag As Boolean) As IEnumerable(Of CentralDogma)
+
         Dim centralDogmaFeatures = genomes.Values _
             .Select(Function(genome)
                         Dim repliconId$ = genome.Locus.AccessionID

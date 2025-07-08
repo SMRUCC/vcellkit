@@ -31,6 +31,18 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 71
+    '    Code Lines: 57 (80.28%)
+    ' Comment Lines: 5 (7.04%)
+    '    - Xml Docs: 100.00%
+    ' 
+    '   Blank Lines: 9 (12.68%)
+    '     File Size: 3.35 KB
+
+
     '     Class ZipAssembly
     ' 
     '         Function: CreateVirtualCellXml, GetComponent, GetText, WriteZip

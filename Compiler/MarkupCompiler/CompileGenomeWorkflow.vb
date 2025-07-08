@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::580bff9b7609abf0ae49c54ad1a08697, engine\Compiler\MarkupCompiler\CompileGenomeWorkflow.vb"
+﻿#Region "Microsoft.VisualBasic::55d09e3418cbb5ba8082d50836dc3eee, engine\Compiler\MarkupCompiler\CompileGenomeWorkflow.vb"
 
     ' Author:
     ' 
@@ -31,6 +31,18 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 68
+    '    Code Lines: 48 (70.59%)
+    ' Comment Lines: 11 (16.18%)
+    '    - Xml Docs: 63.64%
+    ' 
+    '   Blank Lines: 9 (13.24%)
+    '     File Size: 2.79 KB
+
+
     '     Class CompileGenomeWorkflow
     ' 
     '         Constructor: (+1 Overloads) Sub New
@@ -44,10 +56,14 @@
 Imports Microsoft.VisualBasic.Linq
 Imports SMRUCC.genomics.Assembly.NCBI.GenBank
 Imports SMRUCC.genomics.GCModeller.Assembly.GCMarkupLanguage.v2
-Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular.Process
 
 Namespace MarkupCompiler
 
+    ''' <summary>
+    ''' workflow module for create genome replicon model
+    ''' </summary>
     Public Class CompileGenomeWorkflow : Inherits CompilerWorkflow
 
         Sub New(compiler As v2MarkupCompiler)
@@ -66,7 +82,16 @@ Namespace MarkupCompiler
             For Each genome In genomes
                 replicon = New replicon With {
                     .genomeName = genome.Value.Locus.AccessionID,
-                    .genes = genePopulator.getGenes(genome.Value).ToArray,
+                    .operons = genePopulator _
+                        .getGenes(genome.Value) _
+                        .Select(Function(gene)
+                                    ' no transcript unit information
+                                    Return New TranscriptUnit With {
+                                        .id = gene.locus_tag,
+                                        .genes = {gene}
+                                    }
+                                End Function) _
+                        .ToArray,
                     .RNAs = getRNAs(.genomeName).ToArray,
                     .isPlasmid = genome.Value.isPlasmid
                 }
@@ -78,9 +103,9 @@ Namespace MarkupCompiler
         End Function
 
         Private Function getRNAs(repliconName$) As IEnumerable(Of RNA)
-            Dim cdProcess As CentralDogma() = compiler.model _
-                .Genotype _
-                .centralDogmas
+            Dim cdProcess As CentralDogma() '= compiler.model _
+            '.Genotype _
+            '.centralDogmas
 
             Return cdProcess _
                 .Where(Function(proc)

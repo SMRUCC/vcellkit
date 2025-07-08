@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::87fb3367b6274af78c3340eff4a4d5e3, engine\Dynamics\Core\Mass\MassRoles.vb"
+﻿#Region "Microsoft.VisualBasic::f56ec3f31c900fe4d84bee362e1aba39, engine\Dynamics\Core\Mass\MassRoles.vb"
 
     ' Author:
     ' 
@@ -31,10 +31,22 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 25
+    '    Code Lines: 12 (48.00%)
+    ' Comment Lines: 12 (48.00%)
+    '    - Xml Docs: 100.00%
+    ' 
+    '   Blank Lines: 1 (4.00%)
+    '     File Size: 538 B
+
+
     '     Enum MassRoles
     ' 
-    '         compound, gene, mRNA, popypeptide, protein
-    '         rRNA, tRNA
+    '         compound, gene, mRNA, polypeptide, protein
+    '         RNA, rRNA, tRNA
     ' 
     '  
     ' 
@@ -55,7 +67,11 @@ Namespace Core
         mRNA
         tRNA
         rRNA
-        popypeptide
+        ''' <summary>
+        ''' other RNA molecules
+        ''' </summary>
+        RNA
+        polypeptide
         ''' <summary>
         ''' 蛋白包括单体蛋白或者复合物蛋白
         ''' </summary>

@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::156f7a3e683b91d3e44207f033130884, engine\Dynamics\Core\Mass\MassDynamics.vb"
+﻿#Region "Microsoft.VisualBasic::d7b80db5377684811665f89745d09316, engine\Dynamics\Core\Mass\MassDynamics.vb"
 
     ' Author:
     ' 
@@ -31,6 +31,18 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 194
+    '    Code Lines: 142 (73.20%)
+    ' Comment Lines: 24 (12.37%)
+    '    - Xml Docs: 62.50%
+    ' 
+    '   Blank Lines: 28 (14.43%)
+    '     File Size: 7.68 KB
+
+
     '     Class MassDynamics
     ' 
     '         Properties: Name, Value
@@ -42,6 +54,7 @@
 
 #End Region
 
+Imports System.Runtime.CompilerServices
 Imports Microsoft.VisualBasic.ComponentModel.Collection
 Imports Microsoft.VisualBasic.ComponentModel.Collection.Generic
 Imports Microsoft.VisualBasic.Linq
@@ -89,7 +102,7 @@ Namespace Core
         Dim fluxVariants As var()
 
         Public Function Evaluate() As Double Implements INonlinearVar.Evaluate
-            Dim additions As Double
+            Dim additions As Double() = New Double(channels.Length - 1) {}
             Dim dir As Directions
             Dim variants As Double
             Dim flux As Channel
@@ -115,13 +128,16 @@ Namespace Core
                         Throw New InvalidProgramException
                 End Select
 
-                additions += variants
+                additions(i) = variants
                 fluxVariants(i).Value = fluxVariant
             Next
 
-            Return additions
+            Dim dy As Double = additions.Average
+            dy = (channels.Length * dy) / (channels.Length + Math.Abs(dy))
+            Return dy
         End Function
 
+        <MethodImpl(MethodImplOptions.AggressiveInlining)>
         Public Function getLastFluxVariants() As IEnumerable(Of var)
             Return fluxVariants
         End Function
@@ -178,14 +194,17 @@ Namespace Core
                 factors.Clear()
 
                 If Not massIndex.ContainsKey(mass.ID) Then
-                    If mass.ID Like templates Then
-                        channels = {}
-                    Else
-                        Throw New InvalidConstraintException($"missing dynamics for compound: " & mass.ID)
+                    If Not mass.ID Like templates Then
+                        ' compound is constant value
+                        Call ($"missing dynamics for compound: " & mass.ID).Warning
                     End If
+
+                    channels = {}
                 Else
                     channels = massIndex(mass.ID).ToArray
                 End If
+
+                ' channels = channels.Where(Function(fx) Not (fx.left.IsNullOrEmpty OrElse fx.right.IsNullOrEmpty)).ToArray
 
                 For Each flux As Channel In channels
                     matter = flux.GetReactants _
@@ -205,6 +224,10 @@ Namespace Core
                         factors.Add(matter.coefficient)
                     End If
                 Next
+
+                If channels.IsNullOrEmpty Then
+                    Continue For
+                End If
 
                 Yield New MassDynamics With {
                     .mass = mass,

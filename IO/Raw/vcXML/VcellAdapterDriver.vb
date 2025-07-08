@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::a20c400345f713a48edcc33ea327861a, engine\IO\Raw\vcXML\VcellAdapterDriver.vb"
+﻿#Region "Microsoft.VisualBasic::76153d208cf8ff680ba28787494ea526, engine\IO\Raw\vcXML\VcellAdapterDriver.vb"
 
     ' Author:
     ' 
@@ -31,6 +31,18 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 71
+    '    Code Lines: 44 (61.97%)
+    ' Comment Lines: 14 (19.72%)
+    '    - Xml Docs: 0.00%
+    ' 
+    '   Blank Lines: 13 (18.31%)
+    '     File Size: 3.46 KB
+
+
     '     Class VcellAdapterDriver
     ' 
     '         Properties: flux, mass
@@ -46,9 +58,10 @@
 Imports System.Xml
 Imports Microsoft.VisualBasic.ComponentModel.Collection
 Imports Microsoft.VisualBasic.Linq
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.BootstrapLoader.Definitions
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.BootstrapLoader.Engine
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Dynamics.Engine
-Imports SMRUCC.genomics.GCModeller.ModellingEngine.Dynamics.Engine.Definitions
-Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular
 
 Namespace vcXML
 

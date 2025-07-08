@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::9d37b5a07e8c529bb4b0cb1808a9377c, engine\IO\GCMarkupLanguage\v2\OperationExtensions.vb"
+﻿#Region "Microsoft.VisualBasic::598ae840a11ac28aae0ef3a011ef846d, engine\IO\GCMarkupLanguage\v2\OperationExtensions.vb"
 
     ' Author:
     ' 
@@ -31,6 +31,18 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 94
+    '    Code Lines: 62 (65.96%)
+    ' Comment Lines: 22 (23.40%)
+    '    - Xml Docs: 54.55%
+    ' 
+    '   Blank Lines: 10 (10.64%)
+    '     File Size: 3.89 KB
+
+
     '     Module OperationExtensions
     ' 
     '         Function: DeleteMutation, isDisconnectedNode, Trim
@@ -59,12 +71,7 @@ Namespace v2
 
             ' 删除目标基因组之中所有发生缺失突变的基因
             For Each replicon As replicon In model.genome.replicons
-                replicon.genes = replicon.genes _
-                    .AsEnumerable _
-                    .Where(Function(g)
-                               Return Not g.locus_tag Like deleted
-                           End Function) _
-                    .ToArray
+                Call replicon.RemoveByIdList(deleted)
             Next
 
             ' 将对应的调控关系也删除掉

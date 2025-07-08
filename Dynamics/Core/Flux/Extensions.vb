@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::89d5e15b43bd6e0cf8da21fdf449058f, engine\Dynamics\Core\Flux\Extensions.vb"
+﻿#Region "Microsoft.VisualBasic::e973e7a4d4912ff456d3fefff57647b9, engine\Dynamics\Core\Flux\Extensions.vb"
 
     ' Author:
     ' 
@@ -31,6 +31,18 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 37
+    '    Code Lines: 30 (81.08%)
+    ' Comment Lines: 0 (0.00%)
+    '    - Xml Docs: 0.00%
+    ' 
+    '   Blank Lines: 7 (18.92%)
+    '     File Size: 1.28 KB
+
+
     '     Module Extensions
     ' 
     '         Function: GetProducts, GetReactants, MassToString, ToString
@@ -47,7 +59,7 @@ Namespace Core
     <HideModuleName>
     Public Module Extensions
 
-        Friend Function ToString(reaction As Channel) As String
+        Public Function ToString(reaction As Channel) As String
             Dim left = reaction.left.Select(AddressOf MassToString).JoinBy(" + ")
             Dim right = reaction.right.Select(AddressOf MassToString).JoinBy(" + ")
             Dim direct$ = If(reaction.direct = Directions.forward, "=>", "<=")

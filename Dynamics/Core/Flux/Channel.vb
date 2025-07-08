@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::c4ad8a30674163b942fabc88202645c8, engine\Dynamics\Core\Flux\Channel.vb"
+﻿#Region "Microsoft.VisualBasic::da6d1d6e4776870a9401ee5d7f9657ab, engine\Dynamics\Core\Flux\Channel.vb"
 
     ' Author:
     ' 
@@ -31,9 +31,22 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 136
+    '    Code Lines: 74 (54.41%)
+    ' Comment Lines: 42 (30.88%)
+    '    - Xml Docs: 80.95%
+    ' 
+    '   Blank Lines: 20 (14.71%)
+    '     File Size: 5.29 KB
+
+
     '     Class Channel
     ' 
-    '         Properties: bounds, direct, forward, ID, reverse
+    '         Properties: bounds, direct, forward, ID, isBroken
+    '                     reverse
     ' 
     '         Constructor: (+1 Overloads) Sub New
     '         Function: CoverLeft, CoverRight, (+2 Overloads) minimalUnit, ToString
@@ -53,10 +66,15 @@ Namespace Core
     ''' 
     ''' (反应过程通道)
     ''' </summary>
+    ''' <remarks>
+    ''' make flux dynamics association between a set of metabolite mass <see cref="Variable"/>.
+    ''' the flux dynamics could be affects via the environment <see cref="Controls"/>. dynamics
+    ''' of the reaction flux was contraint via the <see cref="bounds"/> range.
+    ''' </remarks>
     Public Class Channel : Implements INamedValue
 
-        Friend left As Variable()
-        Friend right As Variable()
+        Friend ReadOnly left As Variable()
+        Friend ReadOnly right As Variable()
 
         Public Property forward As Controls
         Public Property reverse As Controls
@@ -84,11 +102,15 @@ Namespace Core
             End Get
         End Property
 
+        Public ReadOnly Property isBroken As Boolean
+
         Public Property ID As String Implements IKeyedEntity(Of String).Key
 
         Sub New(left As IEnumerable(Of Variable), right As IEnumerable(Of Variable))
             Me.left = left.ToArray
             Me.right = right.ToArray
+
+            isBroken = Me.left.IsNullOrEmpty OrElse Me.right.IsNullOrEmpty
         End Sub
 
         ''' <summary>
@@ -98,7 +120,11 @@ Namespace Core
         ''' <param name="regulation"></param>
         ''' <returns></returns>
         Public Function CoverLeft(shares As Dictionary(Of String, Double), regulation#) As Double
-            Return minimalUnit(shares, left, regulation, bounds.forward)
+            If isBroken Then
+                Return 0
+            Else
+                Return minimalUnit(shares, left, regulation, bounds.forward)
+            End If
         End Function
 
         ''' <summary>
@@ -108,7 +134,11 @@ Namespace Core
         ''' <param name="regulation"></param>
         ''' <returns></returns>
         Public Function CoverRight(shares As Dictionary(Of String, Double), regulation#) As Double
-            Return minimalUnit(shares, right, regulation, bounds.reverse)
+            If isBroken Then
+                Return 0
+            Else
+                Return minimalUnit(shares, right, regulation, bounds.reverse)
+            End If
         End Function
 
         ''' <summary>
@@ -117,7 +147,10 @@ Namespace Core
         ''' <param name="factors"></param>
         ''' <param name="regulation"></param>
         ''' <returns></returns>
-        Private Shared Function minimalUnit(parallel As Dictionary(Of String, Double), factors As IEnumerable(Of Variable), regulation#, max#) As Double
+        Private Shared Function minimalUnit(parallel As Dictionary(Of String, Double),
+                                            factors As IEnumerable(Of Variable),
+                                            regulation#,
+                                            max#) As Double
             Return factors _
                 .Select(Function(v)
                             Dim reactionUnit = minimalUnit(parallel, regulation, v)

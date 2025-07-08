@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::a164d51315463d718aa4a952fe6a0587, engine\vcellkit\Modeller\Compiler.vb"
+﻿#Region "Microsoft.VisualBasic::ad10afa8c30f74480bbdc81b2d0ad6fd, engine\vcellkit\Modeller\Compiler.vb"
 
     ' Author:
     ' 
@@ -31,10 +31,22 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 179
+    '    Code Lines: 115 (64.25%)
+    ' Comment Lines: 48 (26.82%)
+    '    - Xml Docs: 100.00%
+    ' 
+    '   Blank Lines: 16 (8.94%)
+    '     File Size: 8.46 KB
+
+
     ' Module Compiler
     ' 
-    '     Function: AssemblingGenomeInformation, AssemblingMetabolicNetwork, AssemblingRegulationNetwork, kegg, load_geneKOMapping
-    '               ToMarkup
+    '     Function: AssemblingGenomeInformation, AssemblingMetabolicNetwork, AssemblingRegulationNetwork, compileBiocyc, kegg
+    '               load_geneKOMapping, ToMarkup
     ' 
     ' /********************************************************************************/
 
@@ -42,26 +54,29 @@
 
 Imports Microsoft.VisualBasic.ApplicationServices
 Imports Microsoft.VisualBasic.CommandLine.Reflection
-Imports Microsoft.VisualBasic.Data.csv.IO
+Imports Microsoft.VisualBasic.Data.Framework.IO
 Imports Microsoft.VisualBasic.Linq
 Imports Microsoft.VisualBasic.Scripting.MetaData
 Imports SMRUCC.genomics.Assembly.NCBI.GenBank
+Imports SMRUCC.genomics.Data.BioCyc
 Imports SMRUCC.genomics.Data.Regprecise
 Imports SMRUCC.genomics.GCModeller.Assembly.GCMarkupLanguage.v2
 Imports SMRUCC.genomics.GCModeller.Compiler
 Imports SMRUCC.genomics.GCModeller.Compiler.MarkupCompiler
-Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular
 Imports SMRUCC.genomics.Interops.NCBI.Extensions.LocalBLAST.Application.BBH
 Imports SMRUCC.Rsharp.Runtime
 Imports SMRUCC.Rsharp.Runtime.Internal.Object
 Imports SMRUCC.Rsharp.Runtime.Interop
+Imports SMRUCC.Rsharp.Runtime.Vectorization
 Imports gccWorkflow = SMRUCC.genomics.GCModeller.Compiler.Workflow
 Imports Rdataframe = SMRUCC.Rsharp.Runtime.Internal.Object.dataframe
+Imports RInternal = SMRUCC.Rsharp.Runtime.Internal
 
 ''' <summary>
 ''' The GCModeller virtual cell model creator
 ''' </summary>
-<Package("vcellkit.compiler")>
+<Package("compiler")>
 Module Compiler
 
     ''' <summary>
@@ -101,18 +116,18 @@ Module Compiler
                                        Optional geneIDcol$ = "ID",
                                        Optional env As Environment = Nothing) As Object
         If data Is Nothing Then
-            Return Internal.debug.stop("No gene_id to KO mapping data provided!", env)
+            Return RInternal.debug.stop("No gene_id to KO mapping data provided!", env)
         End If
 
         If TypeOf data Is Rdataframe Then
             If Not DirectCast(data, Rdataframe).columns.ContainsKey(geneIDcol) Then
-                Return Internal.debug.stop($"No geneId column data which is named: '{geneIDcol}'!", env)
+                Return RInternal.debug.stop($"No geneId column data which is named: '{geneIDcol}'!", env)
             ElseIf Not DirectCast(data, Rdataframe).columns.ContainsKey(KOcol) Then
-                Return Internal.debug.stop($"NO KEGG id column data which is named: '{KOcol}'!", env)
+                Return RInternal.debug.stop($"NO KEGG id column data which is named: '{KOcol}'!", env)
             End If
 
-            Dim geneID As String() = asVector(Of String)(DirectCast(data, Rdataframe).GetColumnVector(geneIDcol))
-            Dim KO As String() = asVector(Of String)(DirectCast(data, Rdataframe).GetColumnVector(KOcol))
+            Dim geneID As String() = CLRVector.asCharacter(DirectCast(data, Rdataframe).getColumnVector(geneIDcol))
+            Dim KO As String() = CLRVector.asCharacter(DirectCast(data, Rdataframe).getColumnVector(KOcol))
 
             Return geneID _
                 .SeqIterator _
@@ -141,7 +156,7 @@ Module Compiler
                               End Function)
         End If
 
-        Return Internal.debug.stop(New NotImplementedException(data.GetType.FullName), env)
+        Return RInternal.debug.stop(New NotImplementedException(data.GetType.FullName), env)
     End Function
 
     ''' <summary>
@@ -202,7 +217,16 @@ Module Compiler
                              Optional lociAsLocus_tag As Boolean = False,
                              Optional logfile As String = Nothing) As VirtualCell
 
-        Using compiler As New v2MarkupCompiler(model, genomes, KEGG, regulations, lociAsLocus_tag)
+        Using compiler As New v2KEGGCompiler(model, genomes, KEGG, regulations, lociAsLocus_tag)
+            Return compiler.Compile($"compile --log {logfile.CLIPath}")
+        End Using
+    End Function
+
+    <ExportAPI("compile.biocyc")>
+    Public Function compileBiocyc(biocyc As Workspace, genomes As Dictionary(Of String, GBFF.File),
+                                  Optional logfile As String = "./gcc.log") As VirtualCell
+
+        Using compiler As New BioCyc.v2Compiler(genomes.First.Value, biocyc)
             Return compiler.Compile($"compile --log {logfile.CLIPath}")
         End Using
     End Function

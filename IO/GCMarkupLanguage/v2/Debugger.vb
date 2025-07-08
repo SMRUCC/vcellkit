@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::3b06a90518118b508627a780812962d9, engine\IO\GCMarkupLanguage\v2\Debugger.vb"
+﻿#Region "Microsoft.VisualBasic::8a5029ad8e261abdb074e07fbc36ed37, engine\IO\GCMarkupLanguage\v2\Debugger.vb"
 
     ' Author:
     ' 
@@ -31,6 +31,18 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 22
+    '    Code Lines: 10 (45.45%)
+    ' Comment Lines: 9 (40.91%)
+    '    - Xml Docs: 100.00%
+    ' 
+    '   Blank Lines: 3 (13.64%)
+    '     File Size: 676 B
+
+
     '     Module Debugger
     ' 
     '         Function: checkModel
@@ -58,7 +70,7 @@ Namespace v2
         ''' <returns></returns>
         <Extension>
         Public Function checkModel(vcell As VirtualCell, log As LogFile) As LogFile
-
+            Return log
         End Function
     End Module
 End Namespace

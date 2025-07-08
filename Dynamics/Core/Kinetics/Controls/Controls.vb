@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::e990cc9d123db3a92362edd1a0abad2a, engine\Dynamics\Core\Kinetics\Controls\Controls.vb"
+﻿#Region "Microsoft.VisualBasic::63be76055c1b47f4c2b7d48197e7b5c4, engine\Dynamics\Core\Kinetics\Controls\Controls.vb"
 
     ' Author:
     ' 
@@ -31,6 +31,18 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 61
+    '    Code Lines: 40 (65.57%)
+    ' Comment Lines: 11 (18.03%)
+    '    - Xml Docs: 100.00%
+    ' 
+    '   Blank Lines: 10 (16.39%)
+    '     File Size: 2.11 KB
+
+
     '     Class Controls
     ' 
     '         Properties: baseline, inhibition
@@ -42,6 +54,8 @@
     ' /********************************************************************************/
 
 #End Region
+
+Imports System.Runtime.CompilerServices
 
 Namespace Core
 
@@ -64,6 +78,7 @@ Namespace Core
         ''' <returns></returns>
         Public Property inhibition As Variable() = {}
 
+        <MethodImpl(MethodImplOptions.AggressiveInlining)>
         Public Shared Function StaticControl(baseline As Double) As Controls
             Return New AdditiveControls With {
                 .baseline = baseline,

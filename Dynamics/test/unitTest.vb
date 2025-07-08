@@ -1,54 +1,66 @@
-﻿#Region "Microsoft.VisualBasic::817e442e790132a9f85faa446a00962a, engine\Dynamics\test\unitTest.vb"
+﻿#Region "Microsoft.VisualBasic::1bf271210841318b1adcc7438a0d2172, engine\Dynamics\test\unitTest.vb"
 
-    ' Author:
-    ' 
-    '       asuka (amethyst.asuka@gcmodeller.org)
-    '       xie (genetics@smrucc.org)
-    '       xieguigang (xie.guigang@live.com)
-    ' 
-    ' Copyright (c) 2018 GPL3 Licensed
-    ' 
-    ' 
-    ' GNU GENERAL PUBLIC LICENSE (GPL3)
-    ' 
-    ' 
-    ' This program is free software: you can redistribute it and/or modify
-    ' it under the terms of the GNU General Public License as published by
-    ' the Free Software Foundation, either version 3 of the License, or
-    ' (at your option) any later version.
-    ' 
-    ' This program is distributed in the hope that it will be useful,
-    ' but WITHOUT ANY WARRANTY; without even the implied warranty of
-    ' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    ' GNU General Public License for more details.
-    ' 
-    ' You should have received a copy of the GNU General Public License
-    ' along with this program. If not, see <http://www.gnu.org/licenses/>.
+' Author:
+' 
+'       asuka (amethyst.asuka@gcmodeller.org)
+'       xie (genetics@smrucc.org)
+'       xieguigang (xie.guigang@live.com)
+' 
+' Copyright (c) 2018 GPL3 Licensed
+' 
+' 
+' GNU GENERAL PUBLIC LICENSE (GPL3)
+' 
+' 
+' This program is free software: you can redistribute it and/or modify
+' it under the terms of the GNU General Public License as published by
+' the Free Software Foundation, either version 3 of the License, or
+' (at your option) any later version.
+' 
+' This program is distributed in the hope that it will be useful,
+' but WITHOUT ANY WARRANTY; without even the implied warranty of
+' MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+' GNU General Public License for more details.
+' 
+' You should have received a copy of the GNU General Public License
+' along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 
 
-    ' /********************************************************************************/
+' /********************************************************************************/
 
-    ' Summaries:
+' Summaries:
 
-    ' Module unitTest
-    ' 
-    '     Sub: kineticsTest, loopTest, Main, singleDirection
-    ' 
-    ' /********************************************************************************/
+
+' Code Statistics:
+
+'   Total Lines: 165
+'    Code Lines: 132 (80.00%)
+' Comment Lines: 4 (2.42%)
+'    - Xml Docs: 0.00%
+' 
+'   Blank Lines: 29 (17.58%)
+'     File Size: 6.48 KB
+
+
+' Module unitTest
+' 
+'     Sub: kineticsTest, loopTest, Main, singleDirection
+' 
+' /********************************************************************************/
 
 #End Region
 
-Imports Microsoft.VisualBasic.Data.csv
-Imports Microsoft.VisualBasic.Data.csv.IO
+Imports Microsoft.VisualBasic.Data.Framework
+Imports Microsoft.VisualBasic.Data.Framework.IO
 Imports Microsoft.VisualBasic.Data.visualize.Network
 Imports Microsoft.VisualBasic.Language
 Imports Microsoft.VisualBasic.Linq
-Imports SMRUCC.genomics.GCModeller.ModellingEngine
+Imports Microsoft.VisualBasic.Math.Scripting
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Dynamics
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Dynamics.Core
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Dynamics.Engine
-Imports Microsoft.VisualBasic.Math.Scripting
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model
 
 Module unitTest
     Sub Main()
@@ -61,10 +73,10 @@ Module unitTest
         ' a <=> b
 
         Dim exp = "(Vmax * S) / (Km + S)"
-        Dim model As New Model.Kinetics With {
+        Dim model As New Cellular.Process.Kinetics With {
             .formula = ScriptEngine.ParseExpression(exp),
             .parameters = {"Vmax", "S", "Km"},
-            .paramVals = {10, "a", 2},
+            .paramVals = {5, "a", 2},
             .target = "a->b"
         }
         Dim machine As Vessel = New Vessel()
@@ -74,15 +86,15 @@ Module unitTest
         Dim reaction As New Channel({New Variable(a, 1)}, {New Variable(b, 1)}) With {
             .bounds = {10, 10},
             .ID = "a->b",
-            .forward = New KineticsControls(machine, model) With {.baseline = 0, .inhibition = {}},
+            .forward = New KineticsControls(machine, model.CompileLambda, model.formula) With {.baseline = 0, .inhibition = {}},
             .reverse = New AdditiveControls With {.baseline = 0, .activation = {New Variable(b, 1)}, .inhibition = {New Variable(a, 2)}}
         }
 
-        machine = machine.load({a, b}).load({reaction}).Initialize(10000)
+        machine = machine.load({a, b}).load({reaction}).Initialize
 
         Dim snapshots As New List(Of DataSet)
         Dim flux As New List(Of DataSet)
-        Dim dynamics = machine.ContainerIterator(100)
+        Dim dynamics = machine.ContainerIterator(10000, 1000)
         Dim cache As New FluxAggregater(machine)
 
         For i As Integer = 0 To 10000
@@ -102,7 +114,7 @@ Module unitTest
         Call flux.SaveTo("./kinetics/kinetics_test_flux.csv")
         Call machine.ToGraph.DoCall(AddressOf Visualizer.CreateTabularFormat).Save("./kinetics/test_network/")
 
-        ' Pause()
+        Pause()
     End Sub
 
     Sub singleDirection()
@@ -118,13 +130,11 @@ Module unitTest
             .reverse = New AdditiveControls With {.baseline = 0, .activation = {New Variable(b, 1)}, .inhibition = {New Variable(a, 2)}}
         }
 
-        Dim machine As Vessel = New Vessel().load({a, b}).load({reaction})
-
-        machine.Initialize(10000)
+        Dim machine As Vessel = New Vessel().load({a, b}).load({reaction}).Initialize
 
         Dim snapshots As New List(Of DataSet)
         Dim flux As New List(Of DataSet)
-        Dim dynamics = machine.ContainerIterator(100)
+        Dim dynamics = machine.ContainerIterator(100, 10000)
         Dim cache As New FluxAggregater(machine)
 
         For i As Integer = 0 To 10000
@@ -181,13 +191,11 @@ Module unitTest
             .reverse = New AdditiveControls With {.baseline = 0.05, .activation = {New Variable(a, 1)}}
         }
 
-        Dim machine As Vessel = New Vessel().load({reaction, reaction2, reaction3, reaction4}).load({a, b, c})
-
-        machine.Initialize(10000)
+        Dim machine As Vessel = New Vessel().load({reaction, reaction2, reaction3, reaction4}).load({a, b, c}).Initialize
 
         Dim snapshots As New List(Of DataSet)
         Dim flux As New List(Of DataSet)
-        Dim dynamics = machine.ContainerIterator(100)
+        Dim dynamics = machine.ContainerIterator(100, 10000)
         Dim cache As New FluxAggregater(machine)
 
         For i As Integer = 0 To 2500

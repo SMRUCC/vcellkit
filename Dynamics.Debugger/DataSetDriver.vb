@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::e6f8aba362a282d3adad2214d58145e2, engine\Dynamics.Debugger\DataSetDriver.vb"
+﻿#Region "Microsoft.VisualBasic::0621b1eba8dc9c60fc1fdf30498e2c0f, engine\Dynamics.Debugger\DataSetDriver.vb"
 
     ' Author:
     ' 
@@ -31,11 +31,23 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 31
+    '    Code Lines: 24 (77.42%)
+    ' Comment Lines: 0 (0.00%)
+    '    - Xml Docs: 0.00%
+    ' 
+    '   Blank Lines: 7 (22.58%)
+    '     File Size: 1.12 KB
+
+
     ' Class DataSetDriver
     ' 
     '     Constructor: (+1 Overloads) Sub New
     ' 
-    '     Function: (+2 Overloads) Save
+    '     Function: (+3 Overloads) Save
     ' 
     '     Sub: SnapshotDriver
     ' 
@@ -43,10 +55,11 @@
 
 #End Region
 
+Imports System.IO
 Imports System.Text
 Imports Microsoft.VisualBasic.ComponentModel
-Imports Microsoft.VisualBasic.Data.csv
-Imports Microsoft.VisualBasic.Data.csv.IO
+Imports Microsoft.VisualBasic.Data.Framework
+Imports Microsoft.VisualBasic.Data.Framework.IO
 Imports Microsoft.VisualBasic.Linq
 Imports Microsoft.VisualBasic.Text
 
@@ -61,6 +74,10 @@ Public Class DataSetDriver : Implements ISaveHandle
         Call New DataSet With {.ID = iteration, .Properties = data}.DoCall(AddressOf cache.Add)
     End Sub
 
+    Private Function Save(s As Stream, encoding As Encoding) As Boolean Implements ISaveHandle.Save
+        Throw New NotImplementedException
+    End Function
+
     Public Function Save(path As String, encoding As Encoding) As Boolean Implements ISaveHandle.Save
         Return cache.SaveTo(path, encoding:=encoding)
     End Function
@@ -69,4 +86,3 @@ Public Class DataSetDriver : Implements ISaveHandle
         Return Save(path, encoding.CodePage)
     End Function
 End Class
-

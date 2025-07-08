@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::699c368de4c791f98580a38eae99f87e, engine\IO\GCMarkupLanguage\v2\ModelExtensions.vb"
+﻿#Region "Microsoft.VisualBasic::bcb310f6929884f5b8fc80825068a20f, engine\IO\GCMarkupLanguage\v2\ModelExtensions.vb"
 
     ' Author:
     ' 
@@ -31,9 +31,22 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 315
+    '    Code Lines: 268 (85.08%)
+    ' Comment Lines: 18 (5.71%)
+    '    - Xml Docs: 33.33%
+    ' 
+    '   Blank Lines: 29 (9.21%)
+    '     File Size: 14.19 KB
+
+
     '     Module ModelExtensions
     ' 
-    '         Function: createFluxes, createGenotype, CreateModel, createPhenotype, exportRegulations
+    '         Function: BuildEquation, createFluxes, createGenotype, CreateModel, createPhenotype
+    '                   exportRegulations, loadKinetics
     ' 
     ' 
     ' /********************************************************************************/
@@ -43,12 +56,15 @@
 Imports System.Runtime.CompilerServices
 Imports Microsoft.VisualBasic.ComponentModel.Collection
 Imports Microsoft.VisualBasic.ComponentModel.DataSourceModel
-Imports Microsoft.VisualBasic.Language
 Imports Microsoft.VisualBasic.Linq
 Imports Microsoft.VisualBasic.Math.Scripting
+Imports Microsoft.VisualBasic.Math.Scripting.MathExpression.Impl
 Imports SMRUCC.genomics.ComponentModel.EquaionModel.DefaultTypes
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model
-Imports FluxModel = SMRUCC.genomics.GCModeller.ModellingEngine.Model.Reaction
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular.Molecule
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular.Process
+Imports FluxModel = SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular.Process.Reaction
 
 Namespace v2
 
@@ -56,33 +72,40 @@ Namespace v2
     Public Module ModelExtensions
 
         ''' <summary>
-        ''' 将所加载的XML模型文件转换为统一的数据模型
+        ''' Load model file as the unify data model for run the downstream simulation analysis.
+        ''' (将所加载的XML模型文件转换为统一的数据模型)
         ''' </summary>
         ''' <param name="model"></param>
         ''' <returns></returns>
         <Extension>
         Public Function CreateModel(model As VirtualCell) As CellularModule
+            Dim hasGenotype As Boolean = (Not model.genome Is Nothing) AndAlso Not model.genome.replicons.IsNullOrEmpty
             Dim genotype As New Genotype With {
                 .centralDogmas = model _
                     .createGenotype _
                     .OrderByDescending(Function(gene) gene.RNA.Value) _
                     .ToArray,
-                .ProteinMatrix = model.genome.replicons _
-                    .Select(Function(rep) rep.genes.AsEnumerable) _
+                .ProteinMatrix = {},
+                .RNAMatrix = {}
+            }
+
+            If hasGenotype Then
+                genotype.ProteinMatrix = model.genome.replicons _
+                    .Select(Function(rep) rep.GetGeneList) _
                     .IteratesALL _
                     .Where(Function(gene) Not gene.amino_acid Is Nothing) _
                     .Select(Function(gene)
                                 Return gene.amino_acid.DoCall(AddressOf ProteinFromVector)
                             End Function) _
-                    .ToArray,
-                .RNAMatrix = model.genome.replicons _
-                    .Select(Function(rep) rep.genes.AsEnumerable) _
+                    .ToArray
+                genotype.RNAMatrix = model.genome.replicons _
+                    .Select(Function(rep) rep.GetGeneList) _
                     .IteratesALL _
                     .Select(Function(rna)
                                 Return rna.nucleotide_base.DoCall(AddressOf RNAFromVector)
                             End Function) _
                     .ToArray
-            }
+            End If
 
             Return New CellularModule With {
                 .Taxonomy = model.taxonomy,
@@ -95,18 +118,24 @@ Namespace v2
         <Extension>
         Private Iterator Function createGenotype(model As VirtualCell) As IEnumerable(Of CentralDogma)
             Dim genomeName$
-            Dim enzymes As Dictionary(Of String, Enzyme) = model.metabolismStructure _
-                .enzymes _
-                .ToDictionary(Function(enzyme) enzyme.geneID)
+            Dim enzymes As Dictionary(Of String, Enzyme) = model.metabolismStructure.enzymes.ToDictionary(Function(enzyme) enzyme.geneID)
             Dim rnaTable As Dictionary(Of String, NamedValue(Of RNATypes))
             Dim RNA As NamedValue(Of RNATypes)
             Dim proteinId$
 
-            For Each replicon In model.genome.replicons
+            ' just contains the metabolism network
+            ' for run simulator
+            If model.genome Is Nothing OrElse model.genome.replicons.IsNullOrEmpty Then
+                Return
+            End If
+
+            For Each replicon As replicon In model.genome.replicons
                 genomeName = replicon.genomeName
-                rnaTable = replicon _
-                    .RNAs _
-                    .AsEnumerable _
+                replicon.RNAs = replicon.RNAs.SafeQuery.OrderBy(Function(r) r.gene).ToArray
+                rnaTable = replicon.RNAs _
+                    .SafeQuery _
+                    .GroupBy(Function(r) r.gene) _
+                    .Select(Function(r) r.First) _
                     .ToDictionary(Function(r) r.gene,
                                   Function(r)
                                       Return New NamedValue(Of RNATypes) With {
@@ -116,7 +145,7 @@ Namespace v2
                                       }
                                   End Function)
 
-                For Each gene As gene In replicon.genes.AsEnumerable
+                For Each gene As gene In replicon.GetGeneList
                     If rnaTable.ContainsKey(gene.locus_tag) Then
                         RNA = rnaTable(gene.locus_tag)
                         proteinId = Nothing
@@ -125,7 +154,14 @@ Namespace v2
                         RNA = New NamedValue(Of RNATypes) With {
                             .Name = gene.locus_tag
                         }
-                        proteinId = gene.protein_id Or $"{gene.locus_tag}::peptide".AsDefault
+                        proteinId = gene.protein_id ' Or $"{gene.locus_tag}::peptide".AsDefault
+
+                        If proteinId.StringEmpty Then
+                            Dim warn = $"broken central dogma of '{gene.locus_tag}' was found. this gene should be a mRNA but missing polypeptide data."
+
+                            Call warn.Warning
+                            Call VBDebugger.EchoLine("[warn] " & warn)
+                        End If
                     End If
 
                     Yield New CentralDogma With {
@@ -133,7 +169,9 @@ Namespace v2
                         .geneID = gene.locus_tag,
                         .polypeptide = proteinId,
                         .orthology = enzymes.TryGetValue(.geneID)?.KO,
-                        .RNA = RNA
+                        .RNA = RNA,
+                        .transcript = gene.nucleotide_base?.name,
+                        .translation = gene.amino_acid?.name
                     }
                 Next
             Next
@@ -142,26 +180,32 @@ Namespace v2
         <MethodImpl(MethodImplOptions.AggressiveInlining)>
         <Extension>
         Private Function createPhenotype(model As VirtualCell) As Phenotype
+            Dim hasGenotype As Boolean = (Not model.genome Is Nothing) AndAlso
+                Not model.genome.replicons.IsNullOrEmpty
             Dim fluxChannels = model.createFluxes _
-                .OrderByDescending(Function(r) r.enzyme.SafeQuery.Count) _
+                .OrderByDescending(Function(r) r.enzyme.TryCount) _
                 .ToArray
             Dim enzymes = model.metabolismStructure.enzymes _
                 .Select(Function(enz) enz.geneID) _
                 .ToArray
-            Dim proteins = model.genome.replicons _
-                .Select(Function(genome)
-                            Return genome.genes.AsEnumerable
-                        End Function) _
-                .IteratesALL _
-                .Where(Function(gene) Not gene.amino_acid Is Nothing) _
-                .Select(Function(orf)
-                            Return New Protein With {
-                                .compounds = {},
-                                .polypeptides = {orf.protein_id},
-                                .ProteinID = orf.protein_id
-                            }
-                        End Function) _
-                .ToArray
+            Dim proteins As Protein() = {}
+
+            If hasGenotype Then
+                proteins = model.genome.replicons _
+                    .Select(Function(genome)
+                                Return genome.GetGeneList
+                            End Function) _
+                    .IteratesALL _
+                    .Where(Function(gene) Not gene.amino_acid Is Nothing) _
+                    .Select(Function(orf)
+                                Return New Protein With {
+                                    .compounds = {},
+                                    .polypeptides = {orf.protein_id},
+                                    .ProteinID = orf.protein_id
+                                }
+                            End Function) _
+                    .ToArray
+            End If
 
             Return New Phenotype With {
                 .fluxes = fluxChannels,
@@ -171,16 +215,78 @@ Namespace v2
         End Function
 
         <Extension>
+        Private Function BuildEquation(reaction As Reaction) As Equation
+            Return New Equation With {
+                .Id = reaction.ID,
+                .reversible = True,
+                .Reactants = reaction.substrate _
+                    .Select(Function(c) New CompoundSpecieReference(c.factor, c.compound)) _
+                    .ToArray,
+                .Products = reaction.product _
+                    .Select(Function(c) New CompoundSpecieReference(c.factor, c.compound)) _
+                    .ToArray
+            }
+        End Function
+
+        <Extension>
+        Private Iterator Function loadKinetics(reaction As Reaction, ko As IEnumerable(Of NamedValue(Of Catalysis))) As IEnumerable(Of Kinetics)
+            Dim expr As Expression
+            Dim refVals As Object()
+            Dim pars As String()
+
+            For Each k As NamedValue(Of Catalysis) In ko
+                If k.Value.reaction <> reaction.ID Then
+                    Continue For
+                Else
+                    If k.Value.formula Is Nothing Then
+                        ' apply of the default kinetics
+                        ' Michaelis-Menten equation
+                        ' V= (Vmax⋅[S]) / (km [S])
+                        ' Vmax = kcat [E]
+                        expr = ScriptEngine.ParseExpression("(2 * E *S)/(2+S)")
+                        refVals = New Object() {k.Name & ".complex", reaction.substrate.First.compound}
+                        pars = {"E", "S"}
+                    Else
+                        expr = ScriptEngine.ParseExpression(k.Value.formula.lambda)
+                        refVals = k.Value.parameter _
+                            .Select(Function(a) As Object
+                                        Dim useReferenceId As String = (a.value = 0.0 OrElse a.value.IsNaNImaginary) AndAlso
+                                            Not a.target.StringEmpty
+
+                                        If useReferenceId Then
+                                            Return a.target
+                                        Else
+                                            Return a.value
+                                        End If
+                                    End Function) _
+                            .ToArray
+                        pars = k.Value.formula.parameters
+                    End If
+                End If
+
+                Yield New Kinetics With {
+                    .enzyme = k.Name,
+                    .formula = expr,
+                    .parameters = pars,
+                    .paramVals = refVals,
+                    .target = reaction.ID,
+                    .PH = k.Value.PH,
+                    .temperature = k.Value.temperature
+                }
+            Next
+        End Function
+
+        <Extension>
         Private Iterator Function createFluxes(model As VirtualCell) As IEnumerable(Of FluxModel)
             Dim equation As Equation
             ' {reactionID => KO()}
             Dim enzymes = model.metabolismStructure _
                 .enzymes _
                 .Select(Function(enz)
-                            Return enz _
-                                .catalysis _
+                            Return enz.catalysis _
+                                .SafeQuery _
                                 .Select(Function(ec)
-                                            Return (rID:=ec.reaction, enz:=New NamedValue(Of Catalysis)(enz.KO, ec))
+                                            Return (rID:=ec.reaction, enz:=New NamedValue(Of Catalysis)(If(enz.KO, enz.geneID), ec))
                                         End Function)
                         End Function) _
                 .IteratesALL _
@@ -196,7 +302,7 @@ Namespace v2
             Dim kinetics As Kinetics()
 
             For Each reaction As Reaction In model.metabolismStructure.reactions.AsEnumerable
-                equation = Equation.TryParse(reaction.Equation)
+                equation = reaction.BuildEquation
 
                 If reaction.is_enzymatic Then
                     KO = enzymes.TryGetValue(reaction.ID, [default]:={}, mute:=True)
@@ -204,38 +310,16 @@ Namespace v2
                     If KO.IsNullOrEmpty Then
                         ' 当前的基因组内没有对应的酶来催化这个反应过程
                         ' 则限制一个很小的range
-                        bounds = {10, 10}
+                        bounds = If(reaction.bounds, {10, 10.0})
                         ' 标准的米氏方程？
                         kinetics = {}
                     Else
-                        bounds = {500, 1000.0}
-                        kinetics = KO _
-                            .Where(Function(c) Not c.Value.formula Is Nothing) _
-                            .Where(Function(c) c.Value.reaction = reaction.ID) _
-                            .Select(Function(k)
-                                        Return New Kinetics With {
-                                            .enzyme = k.Name,
-                                            .formula = ScriptEngine.ParseExpression(k.Value.formula.lambda),
-                                            .parameters = k.Value.formula.parameters,
-                                            .paramVals = k.Value.parameter _
-                                                .Select(Function(a) As Object
-                                                            If a.value.IsNaNImaginary Then
-                                                                Return a.target
-                                                            Else
-                                                                Return a.value
-                                                            End If
-                                                        End Function) _
-                                                .ToArray,
-                                            .target = reaction.ID,
-                                            .PH = k.Value.PH,
-                                            .temperature = k.Value.temperature
-                                        }
-                                    End Function) _
-                            .ToArray
+                        bounds = If(reaction.bounds, {500, 1000.0})
+                        kinetics = reaction.loadKinetics(KO).ToArray
                     End If
                 Else
                     KO = {}
-                    bounds = {200, 200.0}
+                    bounds = If(reaction.bounds, {200, 200.0})
                     kinetics = {}
                 End If
 
@@ -255,13 +339,23 @@ Namespace v2
                         .ToArray,
                     .enzyme = KO.Keys.Distinct.ToArray,
                     .bounds = bounds,
-                    .kinetics = kinetics.FirstOrDefault
+                    .kinetics = kinetics
                 }
             Next
         End Function
 
         <Extension>
         Private Iterator Function exportRegulations(model As VirtualCell) As IEnumerable(Of Regulation)
+            Dim hasGenotype As Boolean = (Not model.genome Is Nothing) AndAlso
+                Not model.genome.replicons.IsNullOrEmpty
+
+            If Not hasGenotype Then
+                Return
+            End If
+            If model.genome.regulations.IsNullOrEmpty Then
+                Return
+            End If
+
             For Each reg As transcription In model.genome.regulations
                 Yield New Regulation With {
                     .effects = reg.mode.EvalEffects,

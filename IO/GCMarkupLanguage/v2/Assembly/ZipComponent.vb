@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::02244646142d7eaa00f76d9183c6c2ff, engine\IO\GCMarkupLanguage\v2\Assembly\ZipComponent.vb"
+﻿#Region "Microsoft.VisualBasic::2d302c6a3d6564c7ff00f3ddf8fe613f, engine\IO\GCMarkupLanguage\v2\Assembly\ZipComponent.vb"
 
     ' Author:
     ' 
@@ -31,6 +31,18 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 58
+    '    Code Lines: 46 (79.31%)
+    ' Comment Lines: 1 (1.72%)
+    '    - Xml Docs: 0.00%
+    ' 
+    '   Blank Lines: 11 (18.97%)
+    '     File Size: 1.75 KB
+
+
     '     Class ZipComponent
     ' 
     '         Properties: components, TypeComment
@@ -44,10 +56,16 @@
 #End Region
 
 Imports System.Runtime.Serialization
-Imports System.Web.Script.Serialization
+
 Imports System.Xml
 Imports System.Xml.Serialization
 Imports Microsoft.VisualBasic.ComponentModel
+#If netcore5 = 1 Then
+Imports Microsoft.VisualBasic.ComponentModel.DataSourceModel
+#Else
+Imports System.Web.Script.Serialization
+#End If
+
 Imports Microsoft.VisualBasic.Linq
 Imports Microsoft.VisualBasic.Text.Xml.Models
 Imports SMRUCC.genomics.GCModeller.CompilerServices

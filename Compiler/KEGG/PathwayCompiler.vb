@@ -1,4 +1,4 @@
-﻿#Region "Microsoft.VisualBasic::d57abb62e9105f76d025d94826eb8b06, engine\Compiler\KEGG\PathwayCompiler.vb"
+﻿#Region "Microsoft.VisualBasic::d75bfe9ec97be312fabc5099a1f16a36, engine\Compiler\KEGG\PathwayCompiler.vb"
 
     ' Author:
     ' 
@@ -31,6 +31,18 @@
 
     ' Summaries:
 
+
+    ' Code Statistics:
+
+    '   Total Lines: 99
+    '    Code Lines: 85 (85.86%)
+    ' Comment Lines: 4 (4.04%)
+    '    - Xml Docs: 75.00%
+    ' 
+    '   Blank Lines: 10 (10.10%)
+    '     File Size: 4.45 KB
+
+
     ' Module PathwayCompiler
     ' 
     '     Function: CompileOrganism, CreateMaps, ToMarkup
@@ -46,7 +58,9 @@ Imports SMRUCC.genomics.Assembly.NCBI.GenBank
 Imports SMRUCC.genomics.Data
 Imports SMRUCC.genomics.GCModeller.Assembly.GCMarkupLanguage.v2
 Imports SMRUCC.genomics.GCModeller.Compiler.MarkupCompiler
-Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular.Molecule
+Imports SMRUCC.genomics.GCModeller.ModellingEngine.Model.Cellular.Process
 Imports SMRUCC.genomics.Metagenomics
 
 ''' <summary>
@@ -85,8 +99,9 @@ Public Module PathwayCompiler
                    End Function) _
             .ToDictionary(Function(term) term.geneID)
         Dim maps As FunctionalCategory() = kegg.CreateMaps.ToArray
-        Dim compiler As New v2MarkupCompiler(cell, genomes, Nothing, {}, locationAsLocustag)
-        Dim genomeCompiler As New CompileGenomeWorkflow(compiler)
+        Dim compiler As New v2KEGGCompiler(cell, genomes, Nothing, {}, locationAsLocustag)
+        ' Dim genomeCompiler As New CompileGenomeWorkflow(compiler)
+        Dim genomeCompiler As CompileGenomeWorkflow
 
         Return New VirtualCell With {
             .taxonomy = cell.Taxonomy,
@@ -118,9 +133,9 @@ Public Module PathwayCompiler
                                 .enzymes = map.genes _
                                     .Select(Function(gene)
                                                 Return New [Property] With {
-                                                    .name = gene.name.GetTagValue(":", trim:=True).Value,
-                                                    .comment = gene.name,
-                                                    .value = gene.text.Split.First
+                                                    .name = gene.geneName,
+                                                    .comment = gene.description,
+                                                    .value = gene.description
                                                 }
                                             End Function) _
                                     .ToArray
