@@ -100,7 +100,7 @@ Namespace Core
         ''' 当前的这个微环境之中的所有的物质列表，会包括代谢物，氨基酸，RNA等物质信息
         ''' </summary>
         ''' <returns></returns>
-        Public ReadOnly Property MassEnvironment As Factor()
+        Public ReadOnly Property MassEnvironment As MassFactor()
             <MethodImpl(MethodImplOptions.AggressiveInlining)>
             Get
                 Return m_massIndex.Values.ToArray
@@ -114,7 +114,7 @@ Namespace Core
         ''' </summary>
         Friend shareFactors As (left As Dictionary(Of String, Double), right As Dictionary(Of String, Double))
 
-        Friend m_massIndex As Dictionary(Of String, Factor)
+        Friend m_massIndex As Dictionary(Of String, MassFactor)
         Friend m_channels As Channel()
 
         ''' <summary>
@@ -133,7 +133,12 @@ Namespace Core
 
         <MethodImpl(MethodImplOptions.AggressiveInlining)>
         Public Function getMassValues() As Dictionary(Of String, Double)
-            Return m_massIndex.Values.ToDictionary(Function(m) m.ID, Function(m) m.Value)
+            Return m_massIndex.Values _
+                .IteratesALL _
+                .ToDictionary(Function(m) m.ID & "@" & m.cellular_compartment,
+                              Function(m)
+                                  Return m.Value
+                              End Function)
         End Function
 
         ''' <summary>
@@ -142,7 +147,12 @@ Namespace Core
         ''' <param name="massEnvir"></param>
         ''' <returns></returns>
         Public Function load(massEnvir As IEnumerable(Of Factor)) As Vessel
-            m_massIndex = massEnvir.ToDictionary(Function(m) m.ID)
+            m_massIndex = massEnvir _
+                .GroupBy(Function(m) m.ID) _
+                .ToDictionary(Function(c) c.Key,
+                              Function(c)
+                                  Return New MassFactor(c.Key, c)
+                              End Function)
             Return Me
         End Function
 
@@ -259,8 +269,8 @@ Namespace Core
         ''' <param name="massInit"></param>
         ''' <returns></returns>
         Public Function Reset(massInit As Dictionary(Of String, Double)) As Vessel
-            For Each mass As Factor In Me.MassEnvironment
-                mass.Value = massInit(mass.ID)
+            For Each mass As MassFactor In Me.MassEnvironment
+                Call mass.reset(massInit(mass.id))
             Next
 
             Return Me
