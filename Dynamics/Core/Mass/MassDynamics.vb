@@ -129,7 +129,7 @@ Namespace Core
                         variants = 0
                         fluxVariant = 0
                     Case Else
-                        Throw New InvalidProgramException
+                        Throw New InvalidProgramException($"Unknown reaction direction status of reaction flux: {flux.ID}!")
                 End Select
 
                 additions(i) = variants
