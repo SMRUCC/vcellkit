@@ -60,11 +60,8 @@ Imports System.Runtime.Serialization
 Imports System.Xml
 Imports System.Xml.Serialization
 Imports Microsoft.VisualBasic.ComponentModel
-#If netcore5 = 1 Then
+
 Imports Microsoft.VisualBasic.ComponentModel.DataSourceModel
-#Else
-Imports System.Web.Script.Serialization
-#End If
 
 Imports Microsoft.VisualBasic.Linq
 Imports Microsoft.VisualBasic.Text.Xml.Models
