@@ -1,6 +1,9 @@
 ﻿Imports SMRUCC.genomics.Analysis.HTS.DataFrame
 Imports SMRUCC.genomics.GCModeller.ModellingEngine.Dynamics.Core
 
+''' <summary>
+''' the in-memory model of the virtual cell result data pack
+''' </summary>
 Public Class VCellMatrix
 
     ''' <summary>
