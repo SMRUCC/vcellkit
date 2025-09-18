@@ -45,11 +45,11 @@ Namespace Core
                     If Not arg.IsNumeric(, includesInteger:=True) Then
                         Dim t = arg.Split("@"c)
                         Dim compart As String = t.Last
-                        Dim cid As String = t.Take(t.Length - 1).JoinBy("@")
+                        ' Dim cid As String = t.Take(t.Length - 1).JoinBy("@")
 
                         Yield New VariableFactor With {
                             .compartment_id = compart,
-                            .id = cid,
+                            .id = arg,
                             .factor = factor
                         }
                     End If
