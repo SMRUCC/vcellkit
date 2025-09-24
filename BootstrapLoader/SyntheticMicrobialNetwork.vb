@@ -43,6 +43,4 @@ Public Module SyntheticMicrobialNetwork
 
         Return (massTable, processList.ToArray, fluxIndex)
     End Function
-
-
 End Module
