@@ -1,4 +1,21 @@
-﻿Public Class Metadata
+﻿
+''' <summary>
+''' 结果快照数据的元数据信息
+''' </summary>
+''' <remarks>
+''' 结果快照数据在硬盘上的文件列表为：
+''' 
+''' ```
+''' metadata.json
+''' frame_1.json
+''' frame_2.json
+''' frame_3.json
+''' ...
+''' ```
+''' 
+''' 其中，metadata.json就是本对象的json序列化结果，而frame_xxx.json文件则是具体的数据帧快照<see cref="TimeFrameSnapshot"/>对象的json序列化结果
+''' </remarks>
+Public Class Metadata
 
     ''' <summary>
     ''' 总时间大小
@@ -8,9 +25,9 @@
     ''' <summary>
     ''' 每一帧时间的数据快照对应的时间点，例如：
     ''' 
-    ''' frame_1.zip -> [0] 0.0min
-    ''' frame_2.zip -> [1] 1.0min
-    ''' frame_3.zip -> [2] 2.0min
+    ''' frame_1.json -> [0] 0.0min
+    ''' frame_2.json -> [1] 1.0min
+    ''' frame_3.json -> [2] 2.0min
     ''' </summary>
     ''' <returns></returns>
     Public Property time_frames As Double()
